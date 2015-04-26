@@ -53,8 +53,8 @@
 #include <GL/glx.h>
 #include "log.h"
 extern "C" {
-	#include "fonts.h"
-	#include "ppm.h"
+#include "fonts.h"
+#include "ppm.h"
 }
 
 //defined types
@@ -72,7 +72,7 @@ typedef Flt	Matrix[4][4];
 #define VecCopy(a,b) (b)[0]=(a)[0];(b)[1]=(a)[1];(b)[2]=(a)[2]
 #define VecDot(a,b)	((a)[0]*(b)[0]+(a)[1]*(b)[1]+(a)[2]*(b)[2])
 #define VecSub(a,b,c) (c)[0]=(a)[0]-(b)[0]; \
-							 (c)[1]=(a)[1]-(b)[1]; \
+			     (c)[1]=(a)[1]-(b)[1]; \
 (c)[2]=(a)[2]-(b)[2]
 //macro to swap two integers
 #define SWAP(x,y) (x)^=(y);(y)^=(x);(x)^=(y)
@@ -93,7 +93,7 @@ Flt last_Position_S;
 static int savex = 0;
 static int savey = 0;
 int bulletType = 0;
-	//
+//
 //-----------------------------------------------------------------------------
 //Setup timers
 const double physicsRate = 1.0 / 60.0;
@@ -105,7 +105,7 @@ double timeSpan=0.0;
 //unsigned int upause=0;
 double timeDiff(struct timespec *start, struct timespec *end) {
 	return (double)(end->tv_sec - start->tv_sec ) +
-			(double)(end->tv_nsec - start->tv_nsec) * oobillion;
+		(double)(end->tv_nsec - start->tv_nsec) * oobillion;
 }
 void timeCopy(struct timespec *dest, struct timespec *source) {
 	memcpy(dest, source, sizeof(struct timespec));
@@ -169,6 +169,7 @@ struct Asteroid {
 		prev = NULL;
 		next = NULL;
 	}
+	
 };
 
 struct Game {
@@ -206,7 +207,7 @@ void fire_weapon(Game *game);
 void render(Game *game);
 void bresenham_Ang(int p1, int p2, int p3, int p4, Game *g);
 void render_StartScreen(Game *game);
-void sscreen_background(Game *game);
+void sscreen_background(void);
 int fib(int n);
 
 int main(void)
@@ -322,13 +323,13 @@ void initXWindows(void)
 	glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
 	gc = XCreateGC(dpy, win, 0, NULL);
 	glXMakeCurrent(dpy, win, glc);
-unsigned long cref = 0L;
-    cref += 200;
-    cref <<= 8;
-    cref += 200;
-    cref <<= 8;
-    cref += 200;
-    XSetForeground(dpy, gc, cref);
+	unsigned long cref = 0L;
+	cref += 200;
+	cref <<= 8;
+	cref += 200;
+	cref <<= 8;
+	cref += 200;
+	XSetForeground(dpy, gc, cref);
 }
 
 void reshape_window(int width, int height)
@@ -366,7 +367,7 @@ void init_opengl(void)
 
 	//Load image files
 	background0   = ppm6GetImage("./images/ssbg.ppm");
-	
+
 
 	//Generate Textures
 	glGenTextures(1, &bgTexture0);
@@ -376,9 +377,9 @@ void init_opengl(void)
 	//background
 	glBindTexture(GL_TEXTURE_2D, bgTexture0);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, 3,background0->width, background0->height,
-                                  0, GL_RGB, GL_UNSIGNED_BYTE, background0->data);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, 3,background0->width, background0->height,
+			0, GL_RGB, GL_UNSIGNED_BYTE, background0->data);
 	//add transparency?
 
 
@@ -399,10 +400,10 @@ void check_resize(XEvent *e)
 
 void init(Game *g) {
 	//build 10 asteroids...
-	for (int j=0; j<10; j++) {
+	for (int j=0; j<20; j++) {
 		Asteroid *a = new Asteroid;
 		a->nverts = 8;
-		a->radius = rnd()*80.0 + 40.0;
+		a->radius = 20.0;
 		Flt r2 = a->radius / 2.0;
 		Flt angle = 0.0f;
 		Flt inc = (PI * 2.0) / (Flt)a->nverts;
@@ -411,17 +412,63 @@ void init(Game *g) {
 			a->vert[i][1] = cos(angle) * (r2 + rnd() * a->radius);
 			angle += inc;
 		}
-		a->pos[0] = (Flt)(rand() % xres);
-		a->pos[1] = (Flt)(rand() % yres);
-		a->pos[2] = 0.0f;
 		a->angle = 0.0;
-		a->rotate = rnd() * 4.0 - 2.0;
-		a->color[0] = 0.8;
-		a->color[1] = 0.8;
-		a->color[2] = 0.7;
-		a->vel[0] = (Flt)(rnd()*2.0-1.0);
-		a->vel[1] = (Flt)(rnd()*2.0-1.0);
 		std::cout << "asteroid" << std::endl;
+		//left part of screen 3/4 down from top
+		if((j%5)==0){
+			a->pos[0] = (Flt)(0);
+			a->pos[1] = (Flt)(yres*0.65);
+			a->pos[2] = 0.0f;
+			a->color[0] = 0.8;
+			a->color[1] = 0.8;
+			a->color[2] = 0.7;
+			a->vel[0] = (Flt)(rnd()*2.0);
+			a->vel[1] = (Flt)(0);
+		}
+		//left part of screen 1/4 down from the top
+		if((j%5)==1){
+			a->pos[0] = (Flt)(0);
+			a->pos[1] = (Flt)(yres*0.25);
+			a->pos[2] = 0.0f;
+			a->color[0] = 0.8;
+			a->color[1] = 0.8;
+			a->color[2] = 0.7;
+			a->vel[0] = (Flt)(rnd()*2.0);
+			a->vel[1] = (Flt)(0);
+		}
+		//bottom
+		if((j%5)==2){
+			a->pos[0] = (Flt)(xres*0.25);
+			a->pos[1] = (Flt)(0);
+			a->pos[2] = 0.0f;
+			a->color[0] = 0.8;
+			a->color[1] = 0.8;
+			a->color[2] = 0.7;
+			a->vel[0] = (Flt)(0);
+			a->vel[1] = (Flt)(rnd()*(2.0));
+		}
+		//right middle
+		if((j%5)==3){
+			a->pos[0] = (Flt)(xres);
+			a->pos[1] = (Flt)(yres*0.5);
+			a->pos[2] = 0.0f;
+			a->color[0] = 0.8;
+			a->color[1] = 0.8;
+			a->color[2] = 0.7;
+			a->vel[0] = (Flt)(rnd()*(-2.0));
+			a->vel[1] = (Flt)(rnd()*(0));
+		}
+		//top
+		if((j%5)==4){
+			a->pos[0] = (Flt)(xres*0.65);
+			a->pos[1] = (Flt)(yres);
+			a->pos[2] = 0.0f;
+			a->color[0] = 0.8;
+			a->color[1] = 0.8;
+			a->color[2] = 0.7;
+			a->vel[0] = (Flt)(0);
+			a->vel[1] = (Flt)(rnd()*(-2.0));
+		}	
 		//add to front of linked list
 		a->next = g->ahead;
 		if (g->ahead != NULL)
@@ -445,19 +492,19 @@ void normalize(Vec v) {
 	v[1] *= len;
 }
 
-       //          player1 x , player1 y,  mouse x, mouse y
+//          player1 x , player1 y,  mouse x, mouse y
 void bresenham_Ang(int x0, int y0, int x1, int y1, Game *g) 
 {
 	// I used a TON of divides... maybe look to optimize? ~bware
 	// fixed... mostly  ~bware
 	//Calculate where to angle and shoot based on pointer
 	//int x, y, xDiff, yDiff, err;
-        y1 = yres - y1;
+	y1 = yres - y1;
 	int tmpx = x1-x0;
 	int tmpy = y1-y0;
 	Flt hypot = sqrt(tmpx*tmpx + tmpy*tmpy);
 	Flt trig = sqrt(tmpy/hypot * tmpy/hypot); 
-        Flt angle = ((asin(trig)*100)/1.74444444);
+	Flt angle = ((asin(trig)*100)/1.74444444);
 
 	if(tmpx > 0 && tmpy > 0) {
 
@@ -517,7 +564,7 @@ void check_mouse(XEvent *e, Game *g)
 		if (e->xbutton.button==1) {
 			//Left button is down
 			//g->player1.angle=;
-			
+
 			fire_weapon(g);
 			//std::cout<<"Mouse X:" << savex <<" , Mouse Y:" << savey <<"\n";
 			//bresenham_Ang(g->player1.pos[0], g->player1.pos[1], e->xbutton.x, e->xbutton.y, g);
@@ -816,12 +863,12 @@ void physics(Game *g)
 	//---------------------------------------------------
 	//check keys pressed now
 	//NOTE:: ANGLE CHECKED COUNTER CLOCKWISE
-	
+
 	if(keys) {	
 		last_Position_S = g->player1.angle;
 		//BREAK if attempting to move opposite directions at same time
 		if (((keys[XK_Left] || keys[XK_a]) && (keys[XK_Right] || keys[XK_d])) ||
-		    ((keys[XK_Up]   || keys[XK_w]) && (keys[XK_Down]  || keys[XK_s]))) {
+				((keys[XK_Up]   || keys[XK_w]) && (keys[XK_Down]  || keys[XK_s]))) {
 			//convert player1 angle to radians
 			//convert angle to a vector
 			g->player1.vel[0] = 0;
@@ -834,45 +881,45 @@ void physics(Game *g)
 			normalize(g->player1.vel);
 			g->player1.vel[0] = -4;
 			g->player1.vel[1] = 4;
-    
+
 		}
 		else if ((keys[XK_Down] || keys[XK_s]) && (keys[XK_Left] || keys[XK_a])) {
 			normalize(g->player1.vel);
 			g->player1.vel[0] = -4;
 			g->player1.vel[1] = -4;
-    
+
 		}
 		else if ((keys[XK_Down] || keys[XK_s]) && (keys[XK_Right] || keys[XK_d])) {
 			normalize(g->player1.vel);
 			g->player1.vel[0] = 4;
 			g->player1.vel[1] = -4;
-		
+
 		}
 		else if ((keys[XK_Up] || keys[XK_w]) && (keys[XK_Right] || keys[XK_d])) {
 			normalize(g->player1.vel);
 			g->player1.vel[0] = 4;
 			g->player1.vel[1] = 4;
-		
+
 		}
 		else if (keys[XK_Left] || keys[XK_a]) {
 			normalize(g->player1.vel);
 			g->player1.vel[0] = -8;
-    
+
 		}
 		else if (keys[XK_Right] || keys[XK_d]) {
 			normalize(g->player1.vel);
 			g->player1.vel[0] = 8;
-    
+
 		}
 		else if (keys[XK_Up] || keys[XK_w]) {
 			normalize(g->player1.vel);
 			g->player1.vel[1] = 8;
-    
+
 		}
 		else if (keys[XK_Down] || keys[XK_s]) {
 			normalize(g->player1.vel);
 			g->player1.vel[1] = -8;
-    
+
 		}
 		else {
 			//convert player1 angle to radians
@@ -902,63 +949,63 @@ void fire_weapon(Game *g)
 	if (ts > 0.1) {
 		switch (bulletType) {
 			case 0: {
-				timeCopy(&g->bulletTimer, &bt);
-				//shoot a bullet...
-				Bullet *b = new Bullet;
-				timeCopy(&b->time, &bt);
-				b->pos[0] = g->player1.pos[0];
-				b->pos[1] = g->player1.pos[1];
-				b->vel[0] = 0;
-				b->vel[1] = 0;
-				//convert player1 angle to radians
-				Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
-				//convert angle to a vector
-				Flt xdir = cos(rad);
-				Flt ydir = sin(rad);
-				b->pos[0] += xdir*20.0f;
-				b->pos[1] += ydir*20.0f;
-				b->vel[0] += xdir*9.0f + rnd()*0.1;
-				b->vel[1] += ydir*9.0f + rnd()*0.1;
-				b->color[0] = 1.0f;
-				b->color[1] = 1.0f;
-				b->color[2] = 1.0f;
-				//add to front of bullet linked list
-				b->next = g->bhead;
-				if (g->bhead != NULL)
-					g->bhead->prev = b;
-				g->bhead = b;
-				g->nbullets++;
-				break;
-			}
+					timeCopy(&g->bulletTimer, &bt);
+					//shoot a bullet...
+					Bullet *b = new Bullet;
+					timeCopy(&b->time, &bt);
+					b->pos[0] = g->player1.pos[0];
+					b->pos[1] = g->player1.pos[1];
+					b->vel[0] = 0;
+					b->vel[1] = 0;
+					//convert player1 angle to radians
+					Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
+					//convert angle to a vector
+					Flt xdir = cos(rad);
+					Flt ydir = sin(rad);
+					b->pos[0] += xdir*20.0f;
+					b->pos[1] += ydir*20.0f;
+					b->vel[0] += xdir*9.0f + rnd()*0.1;
+					b->vel[1] += ydir*9.0f + rnd()*0.1;
+					b->color[0] = 1.0f;
+					b->color[1] = 1.0f;
+					b->color[2] = 1.0f;
+					//add to front of bullet linked list
+					b->next = g->bhead;
+					if (g->bhead != NULL)
+						g->bhead->prev = b;
+					g->bhead = b;
+					g->nbullets++;
+					break;
+				}
 			case 1: {
-				timeCopy(&g->bulletTimer, &bt);
-				//shoot a bullet...
-				Bullet *b = new Bullet;
-				timeCopy(&b->time, &bt);
-				b->pos[0] = g->player1.pos[0];
-				b->pos[1] = g->player1.pos[1];
-				b->vel[0] = 0;
-				b->vel[1] = 0;
-				//convert player1 angle to radians
-				Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
-				//convert angle to a vector
-				Flt xdir = cos(rad);
-				Flt ydir = sin(rad);
-				b->pos[0] += xdir*20.0f;
-				b->pos[1] += ydir*20.0f;
-				b->vel[0] += xdir*9.0f + rnd()*0.1;
-				b->vel[1] += ydir*9.0f + rnd()*0.1;
-				b->color[0] = 1.0f;
-				b->color[1] = 1.0f;
-				b->color[2] = 1.0f;
-				//add to front of bullet linked list
-				b->next = g->bhead;
-				if (g->bhead != NULL)
-					g->bhead->prev = b;
-				g->bhead = b;
-				g->nbullets++;
-				break;
-			}
+					timeCopy(&g->bulletTimer, &bt);
+					//shoot a bullet...
+					Bullet *b = new Bullet;
+					timeCopy(&b->time, &bt);
+					b->pos[0] = g->player1.pos[0];
+					b->pos[1] = g->player1.pos[1];
+					b->vel[0] = 0;
+					b->vel[1] = 0;
+					//convert player1 angle to radians
+					Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
+					//convert angle to a vector
+					Flt xdir = cos(rad);
+					Flt ydir = sin(rad);
+					b->pos[0] += xdir*20.0f;
+					b->pos[1] += ydir*20.0f;
+					b->vel[0] += xdir*9.0f + rnd()*0.1;
+					b->vel[1] += ydir*9.0f + rnd()*0.1;
+					b->color[0] = 1.0f;
+					b->color[1] = 1.0f;
+					b->color[2] = 1.0f;
+					//add to front of bullet linked list
+					b->next = g->bhead;
+					if (g->bhead != NULL)
+						g->bhead->prev = b;
+					g->bhead = b;
+					g->nbullets++;
+					break;
+				}
 		}
 	}
 }
@@ -967,7 +1014,7 @@ void render_StartScreen(Game *g)
 {
 	Rect r,s;
 	glClear(GL_COLOR_BUFFER_BIT);
-	sscreen_background(g);
+	sscreen_background();
 	//
 	r.bot = yres - yres*0.7;
 	r.left = xres - xres*0.5;
@@ -976,48 +1023,48 @@ void render_StartScreen(Game *g)
 	ggprint16(&r, 32, 0x00ff00ff, "OPTIONS");
 	ggprint16(&r, 32, 0x00ff00ff, "HIGH SCORES");
 	//...
-	
+
 	switch (g->current_selection) {
 		case 1: {
-			s.bot = yres - yres*0.7;
-			s.left = xres - xres*0.5;
-			s.center = 1;
-			ggprint16(&s, 32, 0x00ffffff, "[                   ]");
-			break;
-		}
+				s.bot = yres - yres*0.7;
+				s.left = xres - xres*0.5;
+				s.center = 1;
+				ggprint16(&s, 32, 0x00ffffff, "[                   ]");
+				break;
+			}
 		case 2: {
-			s.bot = yres - yres*0.7 - 32;
-			s.left = xres - xres*0.5;
-			s.center = 1;
-			ggprint16(&s, 32, 0x00ffffff, "[           ]");
-			break;
-		}
+				s.bot = yres - yres*0.7 - 32;
+				s.left = xres - xres*0.5;
+				s.center = 1;
+				ggprint16(&s, 32, 0x00ffffff, "[           ]");
+				break;
+			}
 		case 3: {
-			s.bot = yres - yres*0.7 - 64;
-			s.left = xres - xres*0.5;
-			s.center = 1;
-			ggprint16(&s, 32, 0x00ffffff, "[                    ]");
-			break;
-		}
+				s.bot = yres - yres*0.7 - 64;
+				s.left = xres - xres*0.5;
+				s.center = 1;
+				ggprint16(&s, 32, 0x00ffffff, "[                    ]");
+				break;
+			}
 		case 0: {   // Enter was pressed
-			switch (g->old_selection) {
-				case 1: {
-					g->startScreen = 0;
-					g->current_selection = g->old_selection;
-					break;
-				}
-				case 2: {
-					//options...
-					g->current_selection = g->old_selection;
-					break;
-				}
-				case 3: {
-					//High Scores page...
-					g->current_selection = g->old_selection;
-					break;
+				switch (g->old_selection) {
+					case 1: {
+							g->startScreen = 0;
+							g->current_selection = g->old_selection;
+							break;
+						}
+					case 2: {
+							//options...
+							g->current_selection = g->old_selection;
+							break;
+						}
+					case 3: {
+							//High Scores page...
+							g->current_selection = g->old_selection;
+							break;
+						}
 				}
 			}
-		}
 	}
 
 
@@ -1029,7 +1076,7 @@ void render_StartScreen(Game *g)
 		g->old_selection = g->current_selection;
 		g->current_selection = 0;
 	}
-	
+
 	fib(34);            //runs way too damn fast without this
 
 
@@ -1040,7 +1087,7 @@ void render(Game *g)
 	//float wid;
 	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);
-	sscreen_background(g); //CHANGE THIS TO GAME BACKGROUND FUNCTION! ~bware
+	sscreen_background(); //CHANGE THIS TO GAME BACKGROUND FUNCTION! ~bware
 	//
 	r.bot = yres - 20;
 	r.left = 10;
@@ -1146,39 +1193,39 @@ void render(Game *g)
 
 //taken from cmps371 work ~bware
 /*void check_images(void)
-{
-     //Pull texture off a PPM image  
-    int i, j;
-    Ppmimage *image = ppm6GetImage("drock057.ppm");
-    GLubyte *c = (GLubyte *)image->data;
+  {
+//Pull texture off a PPM image  
+int i, j;
+Ppmimage *image = ppm6GetImage("drock057.ppm");
+GLubyte *c = (GLubyte *)image->data;
 
-    for (i = 0; i < checkImageHeight; i++) {
-        for (j = 0; j < checkImageWidth; j++) {
-            image1[i][j][0] = (GLubyte) *c;
-            image1[i][j][1] = (GLubyte) *(c+1);
-            image1[i][j][2] = (GLubyte) *(c+2);
-            image1[i][j][3] = (GLubyte) 255;
-            c+=3;
-      }
-   }
+for (i = 0; i < checkImageHeight; i++) {
+for (j = 0; j < checkImageWidth; j++) {
+image1[i][j][0] = (GLubyte) *c;
+image1[i][j][1] = (GLubyte) *(c+1);
+image1[i][j][2] = (GLubyte) *(c+2);
+image1[i][j][3] = (GLubyte) 255;
+c+=3;
 }
-*/
+}
+}
+ */
 
-void sscreen_background(Game *g)
+void sscreen_background(void)
 {
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	//draw textured quad
-	float wid = 120.0f;
+	//float wid = 120.0f;
 	glColor3f(1.0, 0.0, 0.0);
-        //glColor3f(1.0, 1.0, 1.0);
+	//glColor3f(1.0, 1.0, 1.0);
 	glBindTexture(GL_TEXTURE_2D, bgTexture0);
 	glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
-		glTexCoord2f(0.0f, 0.0f); glVertex2i(0, yres);
-		glTexCoord2f(1.0f, 0.0f); glVertex2i(xres, yres);
-		glTexCoord2f(1.0f, 1.0f); glVertex2i(xres, 0);
-		glEnd();
+	glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+	glTexCoord2f(0.0f, 0.0f); glVertex2i(0, yres);
+	glTexCoord2f(1.0f, 0.0f); glVertex2i(xres, yres);
+	glTexCoord2f(1.0f, 1.0f); glVertex2i(xres, 0);
+	glEnd();
 
 }
 
