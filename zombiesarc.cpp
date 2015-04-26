@@ -14,22 +14,22 @@
 //
 // Requirements:                      Add a finish date if you complete any of these ~bware
 // ----------------------------------------------------------------------------------------
-// Start screen with menu selection   []
+// Start screen with menu selection   [X]
 // Keyboard + mouse = move + aim      [X] finished in first gitpush
 // Strafe/ Diagonal movement          [X] finished in first gitpush
 // At least four weapon types         []
 // Zombie spawn/movement algorithm    []
-// Score counter ingame               [] -- 
+// Score counter ingame               [X] -- 
 // Score record keeping               [] -- Should we keep the file online or local?
 // collision detection zombie->player [] -- insta-kill when touched? or health value?
 // Zombie Textures                    [] --
 // Player Textures                    [] -- how many textures to create walk cycle?
 // Blood and Death textures for P+Z   [] -- different death textures, or only one?
-// BACKGROUND                         [] -- single texture or multi? possibly 3d?
+// BACKGROUND                         [/] -- single texture or multi? possibly 3d?
 // Grid to store "rooms"              [] -- how many "rooms"? Room design? difficulty?
 // SOUND                              [] -- Yeah... there is a lot of stuff here...
 // Zombie/Player health values        []
-// Pause Screen                       [] -- I think this would be a good idea to add ~bware
+// Pause Screen                       [/] -- I think this would be a good idea to add ~bware
 //
 // Possible Additions
 // ----------------------
@@ -48,13 +48,12 @@
 //#include <X11/Xutil.h>
 //#include <GL/gl.h>
 #include <GL/glu.h>
-#include <GL/glut.h>
 #include <X11/keysym.h>
 #include <GL/glx.h>
 #include "log.h"
 extern "C" {
-#include "fonts.h"
-#include "ppm.h"
+	#include "fonts.h"
+	#include "ppm.h"
 }
 
 //defined types
@@ -216,10 +215,6 @@ int main(void)
 	initXWindows();
 	init_opengl();
 	Game game;
-	init(&game);
-	srand(time(NULL));
-	clock_gettime(CLOCK_REALTIME, &timePause);
-	clock_gettime(CLOCK_REALTIME, &timeStart);
 	game.current_selection = 1;
 	game.startScreen = 1;
 	int done=0;
@@ -237,10 +232,6 @@ int main(void)
 				done = 1;
 			}
 		}
-		clock_gettime(CLOCK_REALTIME, &timeCurrent);
-		timeSpan = timeDiff(&timeStart, &timeCurrent);
-		timeCopy(&timeStart, &timeCurrent);
-		physicsCountdown += timeSpan;
 		render_StartScreen(&game);
 		glXSwapBuffers(dpy, win);
 	}
@@ -248,6 +239,10 @@ int main(void)
 	//cleanup_fonts();
 	//glClearColor(0.0, 0.0, 0.0, 1.0);
 	//init_opengl();
+	init(&game);
+	srand(time(NULL));
+	clock_gettime(CLOCK_REALTIME, &timePause);
+	clock_gettime(CLOCK_REALTIME, &timeStart);
 	game.player1.score = 0;
 	//we should make a player initialization function
 	while (!done) {
@@ -1068,18 +1063,18 @@ void render_StartScreen(Game *g)
 	}
 
 
-	if ((keys[XK_Down] || keys[XK_s]) && (g->current_selection < 3))
+	if ((keys[XK_Down] || keys[XK_s]) && (g->current_selection < 3)) {
 		g->current_selection++;
-	else if ((keys[XK_Up] || keys[XK_w]) && (g->current_selection > 1))
+		keys[XK_Down] = 0;
+		keys[XK_s] = 0;
+	} else if ((keys[XK_Up] || keys[XK_w]) && (g->current_selection > 1)) {
 		g->current_selection--;
-	else if (keys[XK_Return] || keys[XK_space]) {
+		keys[XK_Up] = 0;
+		keys[XK_w] = 0;
+	} else if (keys[XK_Return] || keys[XK_space]) {
 		g->old_selection = g->current_selection;
 		g->current_selection = 0;
 	}
-
-	fib(34);            //runs way too damn fast without this
-
-
 }
 
 void render(Game *g)
@@ -1230,10 +1225,10 @@ void sscreen_background(void)
 }
 
 
-int fib(int n)
+/*int fib(int n)
 {
 	if (n <= 1)
 		return n;
 	return fib (n-1) + fib(n-2);
 }
-
+*/
