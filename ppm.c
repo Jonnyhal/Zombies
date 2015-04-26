@@ -53,8 +53,9 @@ zzAzzAzzAzzAzzAzzAzzAzzAzzAzzAzzAzzAzzAzzAzzAzzA
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "ppm.h"
-
+extern "C" {
+	#include "ppm.h"
+}
 
 Ppmimage *ppm1GetImage(char *filename)
 {

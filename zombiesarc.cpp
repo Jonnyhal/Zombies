@@ -12,24 +12,30 @@
 //
 //This program is a game starting point for 335
 //
-// Possible requirements:
+// Requirements:                      Add a finish date if you complete any of these ~bware
+// ----------------------------------------------------------------------------------------
+// Start screen with menu selection   []
+// Keyboard + mouse = move + aim      [X] finished in first gitpush
+// Strafe/ Diagonal movement          [X] finished in first gitpush
+// At least four weapon types         []
+// Zombie spawn/movement algorithm    []
+// Score counter ingame               [] -- 
+// Score record keeping               [] -- Should we keep the file online or local?
+// collision detection zombie->player [] -- insta-kill when touched? or health value?
+// Zombie Textures                    [] --
+// Player Textures                    [] -- how many textures to create walk cycle?
+// Blood and Death textures for P+Z   [] -- different death textures, or only one?
+// BACKGROUND                         [] -- single texture or multi? possibly 3d?
+// Grid to store "rooms"              [] -- how many "rooms"? Room design? difficulty?
+// SOUND                              [] -- Yeah... there is a lot of stuff here...
+// Zombie/Player health values        []
+// Pause Screen                       [] -- I think this would be a good idea to add ~bware
+//
+// Possible Additions
 // ----------------------
-// welcome screen
-// menu
-// multiple simultaneous key-press
-// show exhaust for thrusting
-// move the asteroids
-// collision detection for bullet on asteroid
-// collision detection for asteroid on player1
-// control of bullet launch point
-// life span for each bullet
-// cleanup the bullets that miss a target
-// split asteroids into pieces when blasted
-// random generation of new asteroids
-// score keeping
-// levels of difficulty
-// sound
-// use of textures
+// Difficulty setting
+// Destructables
+// Ammo capacity/refills
 // 
 //
 #include <iostream>
@@ -41,13 +47,14 @@
 #include <X11/Xlib.h>
 //#include <X11/Xutil.h>
 //#include <GL/gl.h>
-//#include <GL/glu.h>
+#include <GL/glu.h>
+#include <GL/glut.h>
 #include <X11/keysym.h>
 #include <GL/glx.h>
-#include "ppm.h"
 #include "log.h"
 extern "C" {
 	#include "fonts.h"
+	#include "ppm.h"
 }
 
 //defined types
@@ -55,7 +62,9 @@ typedef float Flt;
 typedef float Vec[3];
 typedef Flt	Matrix[4][4];
 
-//macros
+//macros -- move these to a separate file? -bware
+#define checkImageWidth 64
+#define checkImageHeight 64
 #define rnd() (((double)rand())/(double)RAND_MAX)
 #define random(a) (rand()%a)
 #define VecZero(v) (v)[0]=0.0,(v)[1]=0.0,(v)[2]=0.0
@@ -105,10 +114,18 @@ void timeCopy(struct timespec *dest, struct timespec *source) {
 
 int xres=1250, yres=900;
 
+//images/textures
+//-----------------------------------------------------------------------------
+Ppmimage *background0 = NULL;
+
+//
+GLuint bgTexture0;
+
 struct Player {
 	Vec dir;
 	Vec pos;
 	Vec vel;
+	int score;
 	float angle;
 	float color[3];
 	Player() {
@@ -160,6 +177,9 @@ struct Game {
 	Bullet *bhead;
 	int nasteroids;
 	int nbullets;
+	int startScreen;
+	int current_selection;
+	int old_selection;
 	struct timespec bulletTimer;
 	Game() {
 		ahead = NULL;
@@ -185,6 +205,9 @@ void physics(Game *game);
 void fire_weapon(Game *game);
 void render(Game *game);
 void bresenham_Ang(int p1, int p2, int p3, int p4, Game *g);
+void render_StartScreen(Game *game);
+void sscreen_background(Game *game);
+int fib(int n);
 
 int main(void)
 {
@@ -196,7 +219,36 @@ int main(void)
 	srand(time(NULL));
 	clock_gettime(CLOCK_REALTIME, &timePause);
 	clock_gettime(CLOCK_REALTIME, &timeStart);
+	game.current_selection = 1;
+	game.startScreen = 1;
 	int done=0;
+	int donesscreen;
+	//sscreen_background(&game);
+	//glClearColor(0.0, 0.0, 0.0, 1.0);
+	while (game.startScreen) {
+		while (XPending(dpy)) {
+			XEvent e;
+			XNextEvent(dpy, &e);
+			check_resize(&e);
+			check_mouse(&e, &game);
+			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
+				game.startScreen = 0;
+				done = 1;
+			}
+		}
+		clock_gettime(CLOCK_REALTIME, &timeCurrent);
+		timeSpan = timeDiff(&timeStart, &timeCurrent);
+		timeCopy(&timeStart, &timeCurrent);
+		physicsCountdown += timeSpan;
+		render_StartScreen(&game);
+		glXSwapBuffers(dpy, win);
+	}
+	//cleanupXWindows();
+	//cleanup_fonts();
+	//glClearColor(0.0, 0.0, 0.0, 1.0);
+	//init_opengl();
+	game.player1.score = 0;
+	//we should make a player initialization function
 	while (!done) {
 		while (XPending(dpy)) {
 			XEvent e;
@@ -232,7 +284,7 @@ void set_title(void)
 {
 	//Set the window title bar.
 	XMapWindow(dpy, win);
-	XStoreName(dpy, win, "CS335 - Asteroids template");
+	XStoreName(dpy, win, "DIE ZOMBIE DIE");
 }
 
 void setup_screen_res(const int w, const int h)
@@ -307,10 +359,29 @@ void init_opengl(void)
 	glDisable(GL_CULL_FACE);
 	//
 	//Clear the screen to black
-	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClearColor(1.0, 0.0, 0.0, 1.0);
 	//Do this to allow fonts
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
+
+	//Load image files
+	background0   = ppm6GetImage("./images/ssbg.ppm");
+	
+
+	//Generate Textures
+	glGenTextures(1, &bgTexture0);
+
+
+
+	//background
+	glBindTexture(GL_TEXTURE_2D, bgTexture0);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, 3,background0->width, background0->height,
+                                  0, GL_RGB, GL_UNSIGNED_BYTE, background0->data);
+	//add transparency?
+
+
 }
 
 void check_resize(XEvent *e)
@@ -377,8 +448,8 @@ void normalize(Vec v) {
        //          player1 x , player1 y,  mouse x, mouse y
 void bresenham_Ang(int x0, int y0, int x1, int y1, Game *g) 
 {
-	// I used a TON of divides... maybe look to optimize?
-	//~bware
+	// I used a TON of divides... maybe look to optimize? ~bware
+	// fixed... mostly  ~bware
 	//Calculate where to angle and shoot based on pointer
 	//int x, y, xDiff, yDiff, err;
         y1 = yres - y1;
@@ -584,6 +655,7 @@ void physics(Game *g)
 	g->player1.pos[0] += g->player1.vel[0];
 	g->player1.pos[1] += g->player1.vel[1];
 	//Check for collision with window edges
+	//instantiate background change based on matrix
 	if (g->player1.pos[0] < 0.0) {
 		g->player1.pos[0] += (float)xres;
 	}
@@ -619,16 +691,40 @@ void physics(Game *g)
 		b->pos[1] += b->vel[1];
 		//Check for collision with window edges
 		if (b->pos[0] < 0.0) {
-			b->pos[0] += (float)xres;
+			//b->pos[0] += (float)xres;
+			//time to delete the bullet.
+			Bullet *saveb = b->next;
+			deleteBullet(g, b);
+			b = saveb;
+			g->nbullets--;
+			continue;
 		}
 		else if (b->pos[0] > (float)xres) {
-			b->pos[0] -= (float)xres;
+			//b->pos[0] -= (float)xres;
+			//time to delete the bullet.
+			Bullet *saveb = b->next;
+			deleteBullet(g, b);
+			b = saveb;
+			g->nbullets--;
+			continue;
 		}
 		else if (b->pos[1] < 0.0) {
-			b->pos[1] += (float)yres;
+			//b->pos[1] += (float)yres;
+			//time to delete the bullet.
+			Bullet *saveb = b->next;
+			deleteBullet(g, b);
+			b = saveb;
+			g->nbullets--;
+			continue;
 		}
 		else if (b->pos[1] > (float)yres) {
-			b->pos[1] -= (float)yres;
+			//b->pos[1] -= (float)yres;
+			//time to delete the bullet.
+			Bullet *saveb = b->next;
+			deleteBullet(g, b);
+			b = saveb;
+			g->nbullets--;
+			continue;
 		}
 		b = b->next;
 	}
@@ -674,6 +770,7 @@ void physics(Game *g)
 				//std::cout << "asteroid hit." << std::endl;
 				//this asteroid is hit.
 				if (a->radius > 20.0) {
+					g->player1.score += 200;
 					//break it into pieces.
 					Asteroid *ta = a;
 					buildAsteroidFragment(ta, a);
@@ -690,6 +787,7 @@ void physics(Game *g)
 						g->nasteroids++;
 					}
 				} else {
+					g->player1.score += 75;
 					a->color[0] = 1.0;
 					a->color[1] = 0.1;
 					a->color[2] = 0.1;
@@ -865,18 +963,91 @@ void fire_weapon(Game *g)
 	}
 }
 
+void render_StartScreen(Game *g)
+{
+	Rect r,s;
+	glClear(GL_COLOR_BUFFER_BIT);
+	sscreen_background(g);
+	//
+	r.bot = yres - yres*0.7;
+	r.left = xres - xres*0.5;
+	r.center = 1;
+	ggprint16(&r, 32, 0x00ff00ff, "START GAME");
+	ggprint16(&r, 32, 0x00ff00ff, "OPTIONS");
+	ggprint16(&r, 32, 0x00ff00ff, "HIGH SCORES");
+	//...
+	
+	switch (g->current_selection) {
+		case 1: {
+			s.bot = yres - yres*0.7;
+			s.left = xres - xres*0.5;
+			s.center = 1;
+			ggprint16(&s, 32, 0x00ffffff, "[                   ]");
+			break;
+		}
+		case 2: {
+			s.bot = yres - yres*0.7 - 32;
+			s.left = xres - xres*0.5;
+			s.center = 1;
+			ggprint16(&s, 32, 0x00ffffff, "[           ]");
+			break;
+		}
+		case 3: {
+			s.bot = yres - yres*0.7 - 64;
+			s.left = xres - xres*0.5;
+			s.center = 1;
+			ggprint16(&s, 32, 0x00ffffff, "[                    ]");
+			break;
+		}
+		case 0: {   // Enter was pressed
+			switch (g->old_selection) {
+				case 1: {
+					g->startScreen = 0;
+					g->current_selection = g->old_selection;
+					break;
+				}
+				case 2: {
+					//options...
+					g->current_selection = g->old_selection;
+					break;
+				}
+				case 3: {
+					//High Scores page...
+					g->current_selection = g->old_selection;
+					break;
+				}
+			}
+		}
+	}
+
+
+	if ((keys[XK_Down] || keys[XK_s]) && (g->current_selection < 3))
+		g->current_selection++;
+	else if ((keys[XK_Up] || keys[XK_w]) && (g->current_selection > 1))
+		g->current_selection--;
+	else if (keys[XK_Return] || keys[XK_space]) {
+		g->old_selection = g->current_selection;
+		g->current_selection = 0;
+	}
+	
+	fib(34);            //runs way too damn fast without this
+
+
+}
+
 void render(Game *g)
 {
 	//float wid;
 	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);
+	sscreen_background(g); //CHANGE THIS TO GAME BACKGROUND FUNCTION! ~bware
 	//
 	r.bot = yres - 20;
 	r.left = 10;
 	r.center = 0;
-	ggprint8b(&r, 16, 0x00ff0000, "cs335 - Asteroids");
-	ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g->nbullets);
-	ggprint8b(&r, 16, 0x00ffff00, "n asteroids: %i", g->nasteroids);
+	ggprint8b(&r, 16, 0x00ff0000, "PLAYER 1 SCORE: %i", g->player1.score);
+	//ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g->nbullets);
+	ggprint8b(&r, 16, 0x00ffff00, "Zombies left: %i", g->nasteroids);
 	//-------------------------------------------------------------------------
 	//Draw the player1
 	glColor3fv(g->player1.color);
@@ -973,5 +1144,49 @@ void render(Game *g)
 	}
 }
 
+//taken from cmps371 work ~bware
+/*void check_images(void)
+{
+     //Pull texture off a PPM image  
+    int i, j;
+    Ppmimage *image = ppm6GetImage("drock057.ppm");
+    GLubyte *c = (GLubyte *)image->data;
 
+    for (i = 0; i < checkImageHeight; i++) {
+        for (j = 0; j < checkImageWidth; j++) {
+            image1[i][j][0] = (GLubyte) *c;
+            image1[i][j][1] = (GLubyte) *(c+1);
+            image1[i][j][2] = (GLubyte) *(c+2);
+            image1[i][j][3] = (GLubyte) 255;
+            c+=3;
+      }
+   }
+}
+*/
+
+void sscreen_background(Game *g)
+{
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	//draw textured quad
+	float wid = 120.0f;
+	glColor3f(1.0, 0.0, 0.0);
+        //glColor3f(1.0, 1.0, 1.0);
+	glBindTexture(GL_TEXTURE_2D, bgTexture0);
+	glBegin(GL_QUADS);
+		glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+		glTexCoord2f(0.0f, 0.0f); glVertex2i(0, yres);
+		glTexCoord2f(1.0f, 0.0f); glVertex2i(xres, yres);
+		glTexCoord2f(1.0f, 1.0f); glVertex2i(xres, 0);
+		glEnd();
+
+}
+
+
+int fib(int n)
+{
+	if (n <= 1)
+		return n;
+	return fib (n-1) + fib(n-2);
+}
 
