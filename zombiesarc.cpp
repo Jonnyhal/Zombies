@@ -91,7 +91,7 @@ GC gc;
 Flt last_Position_S;
 static int savex = 0;
 static int savey = 0;
-int bulletType = 0;
+int bulletType = 2;
 //
 //-----------------------------------------------------------------------------
 //Setup timers
@@ -125,6 +125,7 @@ struct Player {
 	Vec pos;
 	Vec vel;
 	int score;
+	int is_firing;
 	float angle;
 	float color[3];
 	Player() {
@@ -143,6 +144,7 @@ struct Player {
 struct Bullet {
 	Vec pos;
 	Vec vel;
+	int type;
 	float color[3];
 	struct timespec time;
 	struct Bullet *prev;
@@ -175,6 +177,8 @@ struct Game {
 	Player player1;
 	Asteroid *ahead;
 	Bullet *bhead;
+	Bullet *chead;
+	Bullet *dhead;
 	int nasteroids;
 	int nbullets;
 	int startScreen;
@@ -184,6 +188,8 @@ struct Game {
 	Game() {
 		ahead = NULL;
 		bhead = NULL;
+		chead = NULL;
+		dhead = NULL;
 		nasteroids = 0;
 		nbullets = 0;
 	}
@@ -203,6 +209,9 @@ void init(Game *g);
 void init_sounds(void);
 void physics(Game *game);
 void fire_weapon(Game *game);
+void bulletDraw(Bullet *b);
+void updateBulletPos(Game *game, Bullet *b); 
+void bul_zomb_collision(Game *g, Bullet *b);
 void render(Game *game);
 void bresenham_Ang(int p1, int p2, int p3, int p4, Game *g);
 void render_StartScreen(Game *game);
@@ -244,6 +253,7 @@ int main(void)
 	clock_gettime(CLOCK_REALTIME, &timePause);
 	clock_gettime(CLOCK_REALTIME, &timeStart);
 	game.player1.score = 0;
+	game.player1.is_firing = 0;
 	//we should make a player initialization function
 	while (!done) {
 		while (XPending(dpy)) {
@@ -553,14 +563,21 @@ void check_mouse(XEvent *e, Game *g)
 	//int my = e->xbutton.y;
 	//
 	if (e->type == ButtonRelease) {
+		g->player1.is_firing = 0;
 		return;
 	}
 	if (e->type == ButtonPress) {
 		if (e->xbutton.button==1) {
 			//Left button is down
 			//g->player1.angle=;
-
-			fire_weapon(g);
+			if (bulletType == 1) {
+				//g->player1.is_firing = 1;
+				fire_weapon(g);
+			} else if (bulletType == 2) {
+				fire_weapon(g);
+			} else if (bulletType == 3) {
+				fire_weapon(g);
+			}
 			//std::cout<<"Mouse X:" << savex <<" , Mouse Y:" << savey <<"\n";
 			//bresenham_Ang(g->player1.pos[0], g->player1.pos[1], e->xbutton.x, e->xbutton.y, g);
 			//std::cout<<"x0*x1-y0*y1" << savey * savex <<"\n";
@@ -618,24 +635,63 @@ int check_keys(XEvent *e)
 
 void deleteBullet(Game *g, Bullet *node)
 {
+	std::cout<< "attempting to delete node.type= " << node->type << "\n";
 	//remove a node from linked list
-	if (node->prev == NULL) {
-		if (node->next == NULL) {
-			g->bhead = NULL;
+	if (node->type == 1) {
+		if (node->prev == NULL) {
+			if (node->next == NULL) {
+				g->bhead = NULL;
+			} else {
+				node->next->prev = NULL;
+				g->bhead = node->next;
+			}
 		} else {
-			node->next->prev = NULL;
-			g->bhead = node->next;
+			if (node->next == NULL) {
+				node->prev->next = NULL;
+			} else {
+				node->prev->next = node->next;
+				node->next->prev = node->prev;
+			}
 		}
-	} else {
-		if (node->next == NULL) {
-			node->prev->next = NULL;
+		delete node;
+		node = NULL;
+	} else if (node->type == 2) {
+		if (node->prev == NULL) {
+			if (node->next == NULL) {
+				g->chead = NULL;
+			} else {
+				node->next->prev = NULL;
+				g->chead = node->next;
+			}
 		} else {
-			node->prev->next = node->next;
-			node->next->prev = node->prev;
+			if (node->next == NULL) {
+				node->prev->next = NULL;
+			} else {
+				node->prev->next = node->next;
+				node->next->prev = node->prev;
+			}
 		}
+		delete node;
+		node = NULL;
+	} else if (node->type == 3) {
+		if (node->prev == NULL) {
+			if (node->next == NULL) {
+				g->dhead = NULL;
+			} else {
+				node->next->prev = NULL;
+				g->dhead = node->next;
+			}
+		} else {
+			if (node->next == NULL) {
+				node->prev->next = NULL;
+			} else {
+				node->prev->next = node->next;
+				node->next->prev = node->prev;
+			}
+		}
+		delete node;
+		node = NULL;
 	}
-	delete node;
-	node = NULL;
 }
 
 void deleteAsteroid(Game *g, Asteroid *node)
@@ -690,33 +746,10 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 	//std::cout << "frag" << std::endl;
 }
 
-void physics(Game *g)
+void updateBulletPos(Game *g, Bullet *b) 
 {
-	Flt d0,d1,dist;
-	//Update player1 position
-	g->player1.pos[0] += g->player1.vel[0];
-	g->player1.pos[1] += g->player1.vel[1];
-	//Check for collision with window edges
-	//instantiate background change based on matrix
-	if (g->player1.pos[0] < 0.0) {
-		g->player1.pos[0] += (float)xres;
-	}
-	else if (g->player1.pos[0] > (float)xres) {
-		g->player1.pos[0] -= (float)xres;
-	}
-	else if (g->player1.pos[1] < 0.0) {
-		g->player1.pos[1] += (float)yres;
-	}
-	else if (g->player1.pos[1] > (float)yres) {
-		g->player1.pos[1] -= (float)yres;
-	}
-	//
-	//std::cout<<"Player X:" << g->player1.pos[0] <<" , Player Y:" << g->player1.pos[1] <<"\n";
-	//
-	//Update bullet positions
 	struct timespec bt;
 	clock_gettime(CLOCK_REALTIME, &bt);
-	Bullet *b = g->bhead;
 	while (b) {
 		//How long has bullet been alive?
 		double ts = timeDiff(&b->time, &bt);
@@ -770,40 +803,15 @@ void physics(Game *g)
 		}
 		b = b->next;
 	}
-	//
-	//Update asteroid positions
+}
+
+void bul_zomb_collision(Game *g, Bullet *x)
+{
+	Flt d0,d1,dist;
 	Asteroid *a = g->ahead;
 	while (a) {
-		//Try nesting everything in an if/else with a randomized bool
-		//to determine if zombie is wandering or running at player?
-		a->pos[0] += a->vel[0];
-		a->pos[1] += a->vel[1];
-		//Check for collision with window edges
-		if (a->pos[0] < -100.0) {
-			a->pos[0] += (float)xres+200;
-		}
-		else if (a->pos[0] > (float)xres+100) {
-			a->pos[0] -= (float)xres+200;
-		}
-		else if (a->pos[1] < -100.0) {
-			a->pos[1] += (float)yres+200;
-		}
-		else if (a->pos[1] > (float)yres+100) {
-			a->pos[1] -= (float)yres+200;
-		}
-		a->angle += a->rotate;
-		a = a->next;
-	}
-	//
-	//Asteroid collision with bullets?
-	//If collision detected:
-	//     1. delete the bullet
-	//     2. break the asteroid into pieces
-	//        if asteroid small, delete it
-	a = g->ahead;
-	while (a) {
 		//is there a bullet within its radius?
-		Bullet *b = g->bhead;
+		Bullet *b = x;
 		while (b) {
 			d0 = b->pos[0] - a->pos[0];
 			d1 = b->pos[1] - a->pos[1];
@@ -854,6 +862,77 @@ void physics(Game *g)
 		if (a == NULL)
 			break;
 		a = a->next;
+	}
+}
+
+void physics(Game *g)
+{
+	//Update player1 position
+	g->player1.pos[0] += g->player1.vel[0];
+	g->player1.pos[1] += g->player1.vel[1];
+	//Check for collision with window edges
+	//instantiate background change based on matrix
+	//remove all zombies and objects and remake them
+	if (g->player1.pos[0] < 0.0) {
+		g->player1.pos[0] += (float)xres;
+	}
+	else if (g->player1.pos[0] > (float)xres) {
+		g->player1.pos[0] -= (float)xres;
+	}
+	else if (g->player1.pos[1] < 0.0) {
+		g->player1.pos[1] += (float)yres;
+	}
+	else if (g->player1.pos[1] > (float)yres) {
+		g->player1.pos[1] -= (float)yres;
+	}
+	//
+	//std::cout<<"Player X:" << g->player1.pos[0] <<" , Player Y:" << g->player1.pos[1] <<"\n";
+	//
+	//Update bullet positions
+	updateBulletPos(g, g->bhead);
+	if (bulletType == 2 || bulletType == 3) {
+		updateBulletPos(g, g->chead);
+		if(bulletType == 3) {
+			updateBulletPos(g, g->dhead);
+		}
+	}
+		
+	//
+	//Update asteroid positions
+	Asteroid *a = g->ahead;
+	while (a) {
+		//Try nesting everything in an if/else with a randomized bool
+		//to determine if zombie is wandering or running at player?
+		a->pos[0] += a->vel[0];
+		a->pos[1] += a->vel[1];
+		//Check for collision with window edges
+		if (a->pos[0] < -100.0) {
+			a->pos[0] += (float)xres+200;
+		}
+		else if (a->pos[0] > (float)xres+100) {
+			a->pos[0] -= (float)xres+200;
+		}
+		else if (a->pos[1] < -100.0) {
+			a->pos[1] += (float)yres+200;
+		}
+		else if (a->pos[1] > (float)yres+100) {
+			a->pos[1] -= (float)yres+200;
+		}
+		a->angle += a->rotate;
+		a = a->next;
+	}
+	//
+	//Asteroid collision with bullets?
+	//If collision detected:
+	//     1. delete the bullet
+	//     2. break the asteroid into pieces
+	//        if asteroid small, delete it
+	bul_zomb_collision(g, g->bhead);
+	if (bulletType == 2 || bulletType == 3) {
+		bul_zomb_collision(g, g->chead);
+		if (bulletType == 3) {
+			bul_zomb_collision(g, g->dhead);
+		}
 	}
 	//---------------------------------------------------
 	//check keys pressed now
@@ -930,6 +1009,19 @@ void physics(Game *g)
 		if (keys[XK_space]) {
 			fire_weapon(g);
 		}
+		if (g->player1.is_firing) {
+			fire_weapon(g);
+		}
+		
+		if (keys[XK_1]) {
+			bulletType = 1;
+		
+		} else if (keys[XK_2]) {
+			bulletType = 2;
+		
+		} else if (keys[XK_3]) {
+			bulletType = 3;
+		}
 	}
 }
 
@@ -943,10 +1035,11 @@ void fire_weapon(Game *g)
 	double ts = timeDiff(&g->bulletTimer, &bt);
 	if (ts > 0.1) {
 		switch (bulletType) {
-			case 0: {
+			case 1: {
 					timeCopy(&g->bulletTimer, &bt);
 					//shoot a bullet...
 					Bullet *b = new Bullet;
+					b->type = 1;
 					timeCopy(&b->time, &bt);
 					b->pos[0] = g->player1.pos[0];
 					b->pos[1] = g->player1.pos[1];
@@ -959,8 +1052,8 @@ void fire_weapon(Game *g)
 					Flt ydir = sin(rad);
 					b->pos[0] += xdir*20.0f;
 					b->pos[1] += ydir*20.0f;
-					b->vel[0] += xdir*9.0f + rnd()*0.1;
-					b->vel[1] += ydir*9.0f + rnd()*0.1;
+					b->vel[0] += xdir*18.0f + rnd()*0.1;
+					b->vel[1] += ydir*18.0f + rnd()*0.1;
 					b->color[0] = 1.0f;
 					b->color[1] = 1.0f;
 					b->color[2] = 1.0f;
@@ -972,33 +1065,140 @@ void fire_weapon(Game *g)
 					g->nbullets++;
 					break;
 				}
-			case 1: {
+			case 2: {
 					timeCopy(&g->bulletTimer, &bt);
 					//shoot a bullet...
 					Bullet *b = new Bullet;
+					b->type = 1;
+					Bullet *c = new Bullet;
+					c->type = 2;
 					timeCopy(&b->time, &bt);
+					timeCopy(&c->time, &bt);
 					b->pos[0] = g->player1.pos[0];
 					b->pos[1] = g->player1.pos[1];
 					b->vel[0] = 0;
 					b->vel[1] = 0;
+					c->pos[0] = g->player1.pos[0];
+					c->pos[1] = g->player1.pos[1];
+					c->vel[0] = 0;
+					c->vel[1] = 0;
 					//convert player1 angle to radians
-					Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
+					Flt rad1 = ((g->player1.angle+110.0) / 360.0f) * PI * 2.0;
+					Flt rad2 = ((g->player1.angle+70.0) / 360.0f) * PI * 2.0;
 					//convert angle to a vector
-					Flt xdir = cos(rad);
-					Flt ydir = sin(rad);
-					b->pos[0] += xdir*20.0f;
-					b->pos[1] += ydir*20.0f;
-					b->vel[0] += xdir*9.0f + rnd()*0.1;
-					b->vel[1] += ydir*9.0f + rnd()*0.1;
+					Flt xdir1 = cos(rad1);
+					Flt ydir1 = sin(rad1);
+					Flt xdir2 = cos(rad2);
+					Flt ydir2 = sin(rad2);
+					b->pos[0] += xdir1*10.0f;
+					b->pos[1] += ydir1*10.0f;
+					normalize(b->vel);
+					b->vel[0] = xdir1*16 + rnd()*0.1;
+					b->vel[1] = ydir1*16 + rnd()*0.1;
 					b->color[0] = 1.0f;
 					b->color[1] = 1.0f;
 					b->color[2] = 1.0f;
+					
+					c->pos[0] += xdir2*20.0f;
+					c->pos[1] += ydir2*20.0f;
+					normalize(c->vel);
+					c->vel[0] = xdir2*16 + rnd()*0.1;
+					c->vel[1] = ydir2*16 + rnd()*0.1;
+					c->color[0] = 1.0f;
+					c->color[1] = 1.0f;
+					c->color[2] = 1.0f;
 					//add to front of bullet linked list
 					b->next = g->bhead;
-					if (g->bhead != NULL)
+					c->next = g->chead;
+					if (g->bhead != NULL) {
 						g->bhead->prev = b;
+					}
+					if (g->chead != NULL) {
+						g->chead->prev = c;
+					}
 					g->bhead = b;
-					g->nbullets++;
+					g->chead = c;
+					g->nbullets+=2;
+					break;
+				}
+			case 3: {
+					timeCopy(&g->bulletTimer, &bt);
+					//shoot a bullet...
+					Bullet *b = new Bullet;
+					b->type = 1;
+					Bullet *c = new Bullet;
+					c->type = 2;
+					Bullet *d = new Bullet;
+					d->type = 3;
+					timeCopy(&b->time, &bt);
+					timeCopy(&c->time, &bt);
+					timeCopy(&d->time, &bt);
+					b->pos[0] = g->player1.pos[0];
+					b->pos[1] = g->player1.pos[1];
+					b->vel[0] = 0;
+					b->vel[1] = 0;
+					c->pos[0] = g->player1.pos[0];
+					c->pos[1] = g->player1.pos[1];
+					c->vel[0] = 0;
+					c->vel[1] = 0;
+					d->pos[0] = g->player1.pos[0];
+					d->pos[1] = g->player1.pos[1];
+					d->vel[0] = 0;
+					d->vel[1] = 0;
+					//convert player1 angle to radians
+					Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
+					Flt rad1 = ((g->player1.angle+110.0) / 360.0f) * PI * 2.0;
+					Flt rad2 = ((g->player1.angle+70.0) / 360.0f) * PI * 2.0;
+					//convert angle to a vector
+					Flt xdir = cos(rad);
+					Flt ydir = sin(rad);
+					Flt xdir1 = cos(rad1);
+					Flt ydir1 = sin(rad1);
+					Flt xdir2 = cos(rad2);
+					Flt ydir2 = sin(rad2);
+					b->pos[0] += xdir1*10.0f;
+					b->pos[1] += ydir1*10.0f;
+					normalize(b->vel);
+					b->vel[0] = xdir1*16 + rnd()*0.1;
+					b->vel[1] = ydir1*16 + rnd()*0.1;
+					b->color[0] = 1.0f;
+					b->color[1] = 1.0f;
+					b->color[2] = 1.0f;
+					
+					c->pos[0] += xdir2*20.0f;
+					c->pos[1] += ydir2*20.0f;
+					normalize(c->vel);
+					c->vel[0] = xdir2*16 + rnd()*0.1;
+					c->vel[1] = ydir2*16 + rnd()*0.1;
+					c->color[0] = 1.0f;
+					c->color[1] = 1.0f;
+					c->color[2] = 1.0f;
+					
+					d->pos[0] += xdir*20.0f;
+					d->pos[1] += ydir*20.0f;
+					normalize(d->vel);
+					d->vel[0] = xdir*16 + rnd()*0.1;
+					d->vel[1] = ydir*16 + rnd()*0.1;
+					d->color[0] = 1.0f;
+					d->color[1] = 1.0f;
+					d->color[2] = 1.0f;
+					//add to front of bullet linked list
+					b->next = g->bhead;
+					c->next = g->chead;
+					d->next = g->dhead;
+					if (g->bhead != NULL) {
+						g->bhead->prev = b;
+					}
+					if (g->chead != NULL) {
+						g->chead->prev = c;
+					}
+					if (g->dhead != NULL) {
+						g->dhead->prev = d;
+					}
+					g->bhead = b;
+					g->chead = c;
+					g->dhead = d;
+					g->nbullets+=3;
 					break;
 				}
 		}
@@ -1088,7 +1288,7 @@ void render(Game *g)
 	r.left = 10;
 	r.center = 0;
 	ggprint8b(&r, 16, 0x00ff0000, "PLAYER 1 SCORE: %i", g->player1.score);
-	//ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g->nbullets);
+	ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g->nbullets);
 	ggprint8b(&r, 16, 0x00ffff00, "Zombies left: %i", g->nasteroids);
 	//-------------------------------------------------------------------------
 	//Draw the player1
@@ -1164,27 +1364,36 @@ void render(Game *g)
 	}
 	//-------------------------------------------------------------------------
 	//Draw the bullets
-	{
-		Bullet *b = g->bhead;
-		while (b) {
-			//Log("draw bullet...\n");
-			glColor3f(1.0, 1.0, 1.0);
-			glBegin(GL_POINTS);
-			glVertex2f(b->pos[0],      b->pos[1]);
-			glVertex2f(b->pos[0]-1.0f, b->pos[1]);
-			glVertex2f(b->pos[0]+1.0f, b->pos[1]);
-			glVertex2f(b->pos[0],      b->pos[1]-1.0f);
-			glVertex2f(b->pos[0],      b->pos[1]+1.0f);
-			glColor3f(0.8, 0.8, 0.8);
-			glVertex2f(b->pos[0]-1.0f, b->pos[1]-1.0f);
-			glVertex2f(b->pos[0]-1.0f, b->pos[1]+1.0f);
-			glVertex2f(b->pos[0]+1.0f, b->pos[1]-1.0f);
-			glVertex2f(b->pos[0]+1.0f, b->pos[1]+1.0f);
-			glEnd();
-			b = b->next;
-		}
-	}
+		bulletDraw(g->bhead);
+		if (bulletType == 2 || bulletType == 3) {
+			bulletDraw(g->chead);
+			if (bulletType == 3) {
+				bulletDraw(g->dhead);
+			}
+		}			
+	
 }
+
+void bulletDraw(Bullet *b)
+{
+	while (b) {
+		//Log("draw bullet...\n");
+		glColor3f(1.0, 1.0, 1.0);
+		glBegin(GL_POINTS);
+		glVertex2f(b->pos[0],      b->pos[1]);
+		glVertex2f(b->pos[0]-1.0f, b->pos[1]);
+		glVertex2f(b->pos[0]+1.0f, b->pos[1]);
+		glVertex2f(b->pos[0],      b->pos[1]-1.0f);
+		glVertex2f(b->pos[0],      b->pos[1]+1.0f);
+		glColor3f(0.8, 0.8, 0.8);
+		glVertex2f(b->pos[0]-1.0f, b->pos[1]-1.0f);
+		glVertex2f(b->pos[0]-1.0f, b->pos[1]+1.0f);
+		glVertex2f(b->pos[0]+1.0f, b->pos[1]-1.0f);
+		glVertex2f(b->pos[0]+1.0f, b->pos[1]+1.0f);
+		glEnd();
+		b = b->next;
+	}
+}	
 
 //taken from cmps371 work ~bware
 /*void check_images(void)
