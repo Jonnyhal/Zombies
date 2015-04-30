@@ -125,6 +125,7 @@ struct Player {
 	Vec dir;
 	Vec pos;
 	Vec vel;
+	Vec origin;
 	int score;
 	float multi;
 	int is_firing;
@@ -135,6 +136,9 @@ struct Player {
 		pos[0] = (Flt)(xres/2);
 		pos[1] = (Flt)(yres/2);
 		pos[2] = 0.0f;
+		origin[0] = (Flt)(xres/2);
+		origin[1] = (Flt)(yres/2);
+		origin[2] = 0.0f;
 		VecZero(vel);
 		angle = 0.0;
 		color[0] = 1.0;
@@ -267,6 +271,7 @@ void sscreen_background(GLuint tex, float r, float g, float b, float alph);
 void deleteZone(Game *g, Zone *node);
 void deleteWaves(Game *g, Wave *node);
 int fib(int n);
+void zMove(Game *g);
 
 int main(void)
 {
@@ -561,7 +566,7 @@ void spawnZombies(Game *g)
 			a->color[1] = 0.0;
 			a->color[2] = 0.0;
 			a->vel[0] = (Flt)(0);
-			a->vel[1] = (Flt)(rnd()*(2.0));
+			a->vel[1] = 10;
 		}
 		//right middle
 		if((j%5)==3){
@@ -595,7 +600,26 @@ void spawnZombies(Game *g)
 	clock_gettime(CLOCK_REALTIME, &g->bulletTimer);
 	//g->zombieSpawner = 0;
 }
+//======Zombie movement function=======
+void zMove(Game *g, Asteroid *a)
+{
+    float d0, d1, dist;
+    d0 = g->player1.pos[0] - a->pos[0];
+    d1 = g->player1.pos[1] - a->pos[1];
+    dist = sqrt(d0*d0 + d1*d1);
+    if (dist < 700) {
+	//g->ahead->pos[0] = g->player1.pos[0] - (d0/dist) * 1.01;
+	//g->ahead->pos[1] = g->player1.pos[1] - (d1/dist) * 1.01;
+	a->vel[0] = d0/dist * 3.0;
+	a->vel[1] = d1/dist * 3.0;
+    }
+    if (g->player1.origin[0] != g->player1.pos[0] || g->player1.origin[1] != g->player1.pos[1]) {
+	a->vel[0] = d0/dist * 4.0;
+	a->vel[1] = d1/dist * 4.0;
+    }
 
+}
+//====================================
 void normalize(Vec v) 
 {
 	Flt len = v[0]*v[0] + v[1]*v[1];
@@ -1071,6 +1095,10 @@ void bul_zomb_collision(Game *g, Bullet *x)
 void physics(Game *g)
 {
 	//Update player1 position
+	//Update player1 position
+	g->player1.origin[0] = g->player1.pos[0];
+	g->player1.origin[1] = g->player1.pos[1];
+
 	g->player1.pos[0] += g->player1.vel[0];
 	g->player1.pos[1] += g->player1.vel[1];
 	//Check for collision with window edges
@@ -1106,6 +1134,7 @@ void physics(Game *g)
 	while (a) {
 		//Try nesting everything in an if/else with a randomized bool
 		//to determine if zombie is wandering or running at player?
+	    	zMove(g, a);
 		a->pos[0] += a->vel[0];
 		a->pos[1] += a->vel[1];
 		//Check for collision with window edges
