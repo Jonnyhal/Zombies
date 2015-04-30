@@ -91,7 +91,8 @@ GC gc;
 Flt last_Position_S;
 static int savex = 0;
 static int savey = 0;
-int bulletType = 2;
+int bulletType = 1;
+
 //
 //-----------------------------------------------------------------------------
 //Setup timers
@@ -125,6 +126,7 @@ struct Player {
 	Vec pos;
 	Vec vel;
 	int score;
+	float multi;
 	int is_firing;
 	float angle;
 	float color[3];
@@ -138,13 +140,42 @@ struct Player {
 		color[0] = 1.0;
 		color[1] = 1.0;
 		color[2] = 1.0;
+		multi = 1.0;
+		score = 0;
+	}
+};
+
+struct Wave {
+	Ppmimage *background;
+	GLuint bgTexture;
+	struct Wave *next;
+	struct Wave *prev;
+	Wave() {
+		prev = NULL;
+		next = NULL;
+	}
+};
+
+struct Zone {
+	Ppmimage *zbackground;
+	GLuint zTexture;
+	struct Zone *next;
+	struct Zone *prev;
+	struct Wave *wave;
+	Zone() {
+		next = NULL;
+		prev = NULL;
+		wave =     NULL;
+		zbackground = NULL;
 	}
 };
 
 struct Bullet {
 	Vec pos;
+	Vec origin;
 	Vec vel;
 	int type;
+	float angle;
 	float color[3];
 	struct timespec time;
 	struct Bullet *prev;
@@ -152,6 +183,14 @@ struct Bullet {
 	Bullet() {
 		prev = NULL;
 		next = NULL;
+		angle = 0.0;
+		pos[0] = (Flt)(xres/2);
+		pos[1] = (Flt)(yres/2);
+		pos[2] = 0.0f;
+		VecZero(vel);
+		color[0] = 1.0;
+		color[1] = 1.0;
+		color[2] = 1.0;
 	}
 };
 
@@ -179,6 +218,10 @@ struct Game {
 	Bullet *bhead;
 	Bullet *chead;
 	Bullet *dhead;
+	Zone *zhead;//update zhead to zhead->nextzone if zhead->wave
+	int zcnt;
+	int wcnt;
+	int zombieSpawner;
 	int nasteroids;
 	int nbullets;
 	int startScreen;
@@ -190,6 +233,9 @@ struct Game {
 		bhead = NULL;
 		chead = NULL;
 		dhead = NULL;
+		zhead = NULL;
+		zcnt = 0;
+		wcnt = 0;
 		nasteroids = 0;
 		nbullets = 0;
 	}
@@ -206,16 +252,20 @@ void check_resize(XEvent *e);
 void check_mouse(XEvent *e, Game *game);
 int check_keys(XEvent *e);
 void init(Game *g);
+void spawnZombies(Game *g);
 void init_sounds(void);
 void physics(Game *game);
 void fire_weapon(Game *game);
 void bulletDraw(Bullet *b);
+Flt bulletAng(Bullet *b); 
 void updateBulletPos(Game *game, Bullet *b); 
 void bul_zomb_collision(Game *g, Bullet *b);
 void render(Game *game);
-void bresenham_Ang(int p1, int p2, int p3, int p4, Game *g);
+void bresenham_Ang(Game *g);
 void render_StartScreen(Game *game);
-void sscreen_background(void);
+void sscreen_background(GLuint tex, float r, float g, float b, float alph);
+void deleteZone(Game *g, Zone *node);
+void deleteWaves(Game *g, Wave *node);
 int fib(int n);
 
 int main(void)
@@ -248,11 +298,11 @@ int main(void)
 	//cleanup_fonts();
 	//glClearColor(0.0, 0.0, 0.0, 1.0);
 	//init_opengl();
+	game.zombieSpawner = 60;
 	init(&game);
 	srand(time(NULL));
 	clock_gettime(CLOCK_REALTIME, &timePause);
 	clock_gettime(CLOCK_REALTIME, &timeStart);
-	game.player1.score = 0;
 	game.player1.is_firing = 0;
 	//we should make a player initialization function
 	while (!done) {
@@ -335,6 +385,7 @@ void initXWindows(void)
 	cref <<= 8;
 	cref += 200;
 	XSetForeground(dpy, gc, cref);
+	memset(keys, 0, 65536);
 }
 
 void reshape_window(int width, int height)
@@ -365,7 +416,7 @@ void init_opengl(void)
 	glDisable(GL_CULL_FACE);
 	//
 	//Clear the screen to black
-	glClearColor(1.0, 0.0, 0.0, 1.0);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
 	//Do this to allow fonts
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
@@ -404,8 +455,68 @@ void check_resize(XEvent *e)
 }
 
 void init(Game *g) {
-	//build 10 asteroids...
-	for (int j=0; j<20; j++) {
+	// before calling, show intro text
+	// ex Round 1 Wave 1 
+	//        START!
+	//initialize level+spawn zombs
+	//check before if zomb==0, init()
+	std::cout<<"zcnt: " << g->zcnt;
+	std::cout<<"wcnt: " << g->wcnt;
+
+	if (g->wcnt > 3) {
+		Zone *z = new Zone;
+		z->wave = new Wave;
+		deleteZone(g,g->zhead);
+		g->zhead = z;
+		g->zcnt++;
+		g->wcnt = 1;
+		g->zhead->zbackground = ppm6GetImage("./images/tex3check.ppm");
+		glClearColor(1.0, 0.0, 0.0, 1.0);
+		//Do this to allow fonts
+		glEnable(GL_TEXTURE_2D);
+		initialize_fonts();
+		
+		glGenTextures(1, &g->zhead->zTexture);
+		glBindTexture(GL_TEXTURE_2D, g->zhead->zTexture);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, 3,g->zhead->zbackground->width, 
+				g->zhead->zbackground->height,0, GL_RGB, GL_UNSIGNED_BYTE, 
+				g->zhead->zbackground->data);
+	
+	} else if (g->zhead == NULL) {
+		Zone *z = new Zone;
+		z->wave = new Wave;
+		g->zhead = z;
+		g->zcnt = 1;
+		g->wcnt = 1;
+		g->zhead->zbackground = ppm6GetImage("./images/tex2.ppm");
+		glClearColor(1.0, 0.0, 0.0, 1.0);
+		//Do this to allow fonts
+		glEnable(GL_TEXTURE_2D);
+		initialize_fonts();
+		
+		glGenTextures(1, &g->zhead->zTexture);
+		glBindTexture(GL_TEXTURE_2D, g->zhead->zTexture);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, 3,g->zhead->zbackground->width, 
+				g->zhead->zbackground->height,0, GL_RGB, GL_UNSIGNED_BYTE, 
+				g->zhead->zbackground->data);
+	 } else {
+		Wave *w = new Wave;
+		w->next = g->zhead->wave;
+		g->zhead->wave->prev = w;
+		g->zhead->wave = w;
+		g->wcnt++;
+	}
+	spawnZombies(g);
+}
+
+void spawnZombies(Game *g) 
+{
+	//build x zombies... where x = zombiespawner
+	for (int j=0; j<g->zombieSpawner; j++) {
 		Asteroid *a = new Asteroid;
 		a->nverts = 8;
 		a->radius = 20.0;
@@ -424,9 +535,9 @@ void init(Game *g) {
 			a->pos[0] = (Flt)(0);
 			a->pos[1] = (Flt)(yres*0.65);
 			a->pos[2] = 0.0f;
-			a->color[0] = 0.8;
-			a->color[1] = 0.8;
-			a->color[2] = 0.7;
+			a->color[0] = 1.0;
+			a->color[1] = 0.0;
+			a->color[2] = 0.0;
 			a->vel[0] = (Flt)(rnd()*2.0);
 			a->vel[1] = (Flt)(0);
 		}
@@ -435,9 +546,9 @@ void init(Game *g) {
 			a->pos[0] = (Flt)(0);
 			a->pos[1] = (Flt)(yres*0.25);
 			a->pos[2] = 0.0f;
-			a->color[0] = 0.8;
-			a->color[1] = 0.8;
-			a->color[2] = 0.7;
+			a->color[0] = 1.0;
+			a->color[1] = 0.0;
+			a->color[2] = 0.0;
 			a->vel[0] = (Flt)(rnd()*2.0);
 			a->vel[1] = (Flt)(0);
 		}
@@ -446,9 +557,9 @@ void init(Game *g) {
 			a->pos[0] = (Flt)(xres*0.25);
 			a->pos[1] = (Flt)(0);
 			a->pos[2] = 0.0f;
-			a->color[0] = 0.8;
-			a->color[1] = 0.8;
-			a->color[2] = 0.7;
+			a->color[0] = 1.0;
+			a->color[1] = 0.0;
+			a->color[2] = 0.0;
 			a->vel[0] = (Flt)(0);
 			a->vel[1] = (Flt)(rnd()*(2.0));
 		}
@@ -457,9 +568,9 @@ void init(Game *g) {
 			a->pos[0] = (Flt)(xres);
 			a->pos[1] = (Flt)(yres*0.5);
 			a->pos[2] = 0.0f;
-			a->color[0] = 0.8;
-			a->color[1] = 0.8;
-			a->color[2] = 0.7;
+			a->color[0] = 1.0;
+			a->color[1] = 0.0;
+			a->color[2] = 0.0;
 			a->vel[0] = (Flt)(rnd()*(-2.0));
 			a->vel[1] = (Flt)(rnd()*(0));
 		}
@@ -468,9 +579,9 @@ void init(Game *g) {
 			a->pos[0] = (Flt)(xres*0.65);
 			a->pos[1] = (Flt)(yres);
 			a->pos[2] = 0.0f;
-			a->color[0] = 0.8;
-			a->color[1] = 0.8;
-			a->color[2] = 0.7;
+			a->color[0] = 1.0;
+			a->color[1] = 0.0;
+			a->color[2] = 0.0;
 			a->vel[0] = (Flt)(0);
 			a->vel[1] = (Flt)(rnd()*(-2.0));
 		}	
@@ -482,10 +593,11 @@ void init(Game *g) {
 		g->nasteroids++;
 	}
 	clock_gettime(CLOCK_REALTIME, &g->bulletTimer);
-	memset(keys, 0, 65536);
+	//g->zombieSpawner = 0;
 }
 
-void normalize(Vec v) {
+void normalize(Vec v) 
+{
 	Flt len = v[0]*v[0] + v[1]*v[1];
 	if (len == 0.0f) {
 		v[0] = 1.0;
@@ -498,15 +610,18 @@ void normalize(Vec v) {
 }
 
 //          player1 x , player1 y,  mouse x, mouse y
-void bresenham_Ang(int x0, int y0, int x1, int y1, Game *g) 
+void bresenham_Ang(Game *g) 
 {
 	// I used a TON of divides... maybe look to optimize? ~bware
 	// fixed... mostly  ~bware
 	//Calculate where to angle and shoot based on pointer
 	//int x, y, xDiff, yDiff, err;
+	float x0, y0, x1, y1;
+	x0 = g->player1.pos[0], y0 = g->player1.pos[1];
+	x1 = savex, y1 = savey;
 	y1 = yres - y1;
-	int tmpx = x1-x0;
-	int tmpy = y1-y0;
+	float tmpx = x1-x0;
+	float tmpy = y1-y0;
 	Flt hypot = sqrt(tmpx*tmpx + tmpy*tmpy);
 	Flt trig = sqrt(tmpy/hypot * tmpy/hypot); 
 	Flt angle = ((asin(trig)*100)/1.74444444);
@@ -551,10 +666,41 @@ void bresenham_Ang(int x0, int y0, int x1, int y1, Game *g)
 		//std::cout<<" x1 - x0 =  " << tmpx << " ,y1-. = "<< tmpy <<"\n";
 		g->player1.angle = angle;
 		last_Position_S = g->player1.angle;
-
 	}
 
 }
+/*           bullet x, y,     origin x, y */
+Flt bulletAng(Bullet *b) 
+{
+	float x0, y0, x1, y1;
+	x0 = b->pos[0], y0 = b->pos[1];
+	x1 = b->origin[0], y1 = b->origin[1];
+	y1 = yres - y1;
+	int tmpx = x1-x0;
+	int tmpy = y1-y0;
+	Flt hypot = sqrt(tmpx*tmpx + tmpy*tmpy);
+	Flt trig = sqrt(tmpy/hypot * tmpy/hypot); 
+	Flt angle = ((asin(trig)*100)/1.74444444);
+	//std::cout<<"bullet posxy: " << x0 << ", " << y0 << "\n";
+	if(tmpx > 0 && tmpy > 0) {
+		angle = 270 + angle;
+		return angle;
+	}
+	if(tmpx > 0 && tmpy < 0) {
+		angle = 270 - angle;
+		return angle;
+	}
+	if(tmpx < 0 && tmpy < 0) {
+		angle = 90 + angle;
+		return angle;
+	}
+	if(tmpx < 0 && tmpy > 0) {
+		angle = 90 - angle;
+		return angle;
+	}
+	return 0;
+}
+
 void check_mouse(XEvent *e, Game *g)
 {
 	//Did the mouse move?
@@ -590,7 +736,13 @@ void check_mouse(XEvent *e, Game *g)
 		//Mouse moved
 		savex = e->xbutton.x;
 		savey = e->xbutton.y;
-		bresenham_Ang(g->player1.pos[0], g->player1.pos[1], savex, savey, g);
+		//bresenham_Ang(g->player1.pos[0], g->player1.pos[1], savex, savey, g);
+	/*	if (g->bhead != NULL)
+			g->bhead->angle = bulletAng(g->bhead->pos[0], g->bhead->pos[1], savex, savey);
+		if (g->chead != NULL)
+			g->chead->angle = bulletAng(g->chead->pos[0], g->chead->pos[1], savex, savey);
+		if (g->dhead != NULL)
+			g->dhead->angle = bulletAng(g->dhead->pos[0], g->dhead->pos[1], savex, savey);*/
 	}
 }
 
@@ -635,7 +787,6 @@ int check_keys(XEvent *e)
 
 void deleteBullet(Game *g, Bullet *node)
 {
-	std::cout<< "attempting to delete node.type= " << node->type << "\n";
 	//remove a node from linked list
 	if (node->type == 1) {
 		if (node->prev == NULL) {
@@ -706,6 +857,58 @@ void deleteAsteroid(Game *g, Asteroid *node)
 			} else {
 				node->next->prev = NULL;
 				g->ahead = node->next;
+			}
+		} else {
+			if (node->next == NULL) {
+				node->prev->next = NULL;
+			} else {
+				node->prev->next = node->next;
+				node->next->prev = node->prev;
+			}
+		}
+		delete node;
+		node = NULL;
+	}
+}
+
+void deleteZone(Game *g, Zone *node)
+{
+	//remove a node from linked list
+	deleteWaves(g, node->wave);
+	if (node){
+		//remove a node from linked list
+		if (node->prev == NULL) {
+			if (node->next == NULL) {
+				g->zhead = NULL;
+			} else {
+				node->next->prev = NULL;
+				g->zhead = node->next;
+			}
+		} else {
+			if (node->next == NULL) {
+				node->prev->next = NULL;
+			} else {
+				node->prev->next = node->next;
+				node->next->prev = node->prev;
+			}
+		}
+		delete node;
+		node = NULL;
+	}
+}
+
+void deleteWaves(Game *g, Wave *node)
+{
+	//remove a node from linked list
+	if (g){}
+	if (node){
+		//remove a node from linked list
+		if (node->prev == NULL) {
+			if (node->next == NULL) {
+				g->zhead->wave = NULL;
+			} else {
+				node->next->prev = NULL;
+				g->zhead->wave = node->next;
 			}
 		} else {
 			if (node->next == NULL) {
@@ -1005,7 +1208,7 @@ void physics(Game *g)
 				g->player1.angle -= 360.0f;
 
 		}
-		bresenham_Ang(g->player1.pos[0], g->player1.pos[1], savex, savey, g);
+		bresenham_Ang(g);
 		if (keys[XK_space]) {
 			fire_weapon(g);
 		}
@@ -1043,8 +1246,12 @@ void fire_weapon(Game *g)
 					timeCopy(&b->time, &bt);
 					b->pos[0] = g->player1.pos[0];
 					b->pos[1] = g->player1.pos[1];
+					b->origin[0] = g->player1.pos[0];
+					b->origin[1] = g->player1.pos[1];
+					b->origin[2] = g->player1.pos[2];
 					b->vel[0] = 0;
 					b->vel[1] = 0;
+					b->angle = g->player1.angle;
 					//convert player1 angle to radians
 					Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
 					//convert angle to a vector
@@ -1076,10 +1283,14 @@ void fire_weapon(Game *g)
 					timeCopy(&c->time, &bt);
 					b->pos[0] = g->player1.pos[0];
 					b->pos[1] = g->player1.pos[1];
+					b->origin[0] = g->player1.pos[0];
+					b->origin[1] = g->player1.pos[1];
 					b->vel[0] = 0;
 					b->vel[1] = 0;
 					c->pos[0] = g->player1.pos[0];
 					c->pos[1] = g->player1.pos[1];
+					c->origin[0] = g->player1.pos[0];
+					c->origin[1] = g->player1.pos[1];
 					c->vel[0] = 0;
 					c->vel[1] = 0;
 					//convert player1 angle to radians
@@ -1135,14 +1346,20 @@ void fire_weapon(Game *g)
 					timeCopy(&d->time, &bt);
 					b->pos[0] = g->player1.pos[0];
 					b->pos[1] = g->player1.pos[1];
+					b->origin[0] = g->player1.pos[0];
+					b->origin[1] = g->player1.pos[1];
 					b->vel[0] = 0;
 					b->vel[1] = 0;
 					c->pos[0] = g->player1.pos[0];
 					c->pos[1] = g->player1.pos[1];
+					c->origin[0] = g->player1.pos[0];
+					c->origin[1] = g->player1.pos[1];
 					c->vel[0] = 0;
 					c->vel[1] = 0;
 					d->pos[0] = g->player1.pos[0];
 					d->pos[1] = g->player1.pos[1];
+					d->origin[0] = g->player1.pos[0];
+					d->origin[1] = g->player1.pos[1];
 					d->vel[0] = 0;
 					d->vel[1] = 0;
 					//convert player1 angle to radians
@@ -1209,7 +1426,7 @@ void render_StartScreen(Game *g)
 {
 	Rect r,s;
 	glClear(GL_COLOR_BUFFER_BIT);
-	sscreen_background();
+	sscreen_background(bgTexture0, 1.0, 1.0, 1.0, 1.0);
 	//
 	r.bot = yres - yres*0.7;
 	r.left = xres - xres*0.5;
@@ -1280,22 +1497,29 @@ void render_StartScreen(Game *g)
 void render(Game *g)
 {
 	//float wid;
+	if (g->nasteroids == 0)
+		init(g);
+
 	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);
-	sscreen_background(); //CHANGE THIS TO GAME BACKGROUND FUNCTION! ~bware
+	sscreen_background(g->zhead->zTexture, 1.0, 1.0, 1.0, 1.0);
 	//
-	r.bot = yres - 20;
+	r.bot = yres - 64;
 	r.left = 10;
 	r.center = 0;
-	ggprint8b(&r, 16, 0x00ff0000, "PLAYER 1 SCORE: %i", g->player1.score);
-	ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g->nbullets);
-	ggprint8b(&r, 16, 0x00ffff00, "Zombies left: %i", g->nasteroids);
+	ggprint16(&r, 32, 0x0011ff11, "PLAYER 1 SCORE: %i", g->player1.score);
+	ggprint16(&r, 16, 0x00ff1111, "MULTI         : %i", g->player1.multi);
+	
+	ggprint8b(&r, 16, 0x00ff1111, "Zone %i, Wave %i", g->zcnt, g->wcnt);
+	ggprint8b(&r, 16, 0x00ff1111, "n bullets: %i", g->nbullets);
+	ggprint8b(&r, 16, 0x00ff1111, "Zombies left: %i", g->nasteroids);
 	//-------------------------------------------------------------------------
 	//Draw the player1
 	glColor3fv(g->player1.color);
 	glPushMatrix();
 	glTranslatef(g->player1.pos[0], g->player1.pos[1], g->player1.pos[2]);
 	//float angle = atan2(player1.dir[1], player1.dir[0]);
+	//std::cout<<"angle = " << g->player1.angle << std::endl;
 	glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
 	glBegin(GL_TRIANGLES);
 	//glVertex2f(-10.0f, -10.0f);
@@ -1362,24 +1586,31 @@ void render(Game *g)
 			a = a->next;
 		}
 	}
+	//std::cout<<"player angle: " << g->player1.angle << "\n";
 	//-------------------------------------------------------------------------
 	//Draw the bullets
-		bulletDraw(g->bhead);
-		if (bulletType == 2 || bulletType == 3) {
-			bulletDraw(g->chead);
-			if (bulletType == 3) {
-				bulletDraw(g->dhead);
+		//std::cout<<"player posxy: " << g->player1.pos[0] << ", " << g->player1.pos[1] << ", " << g->player1.pos[2] << "\n";
+		if (g->bhead != NULL) {
+			bulletDraw(g->bhead);
+			if (g->chead != NULL) {
+				if (bulletType == 2 || bulletType == 3) {
+					bulletDraw(g->chead);
+					if (bulletType == 3 && g->dhead != NULL) {
+						bulletDraw(g->dhead);
+					}
+				}				
 			}
-		}			
-	
+		}
 }
 
 void bulletDraw(Bullet *b)
 {
 	while (b) {
 		//Log("draw bullet...\n");
-		glColor3f(1.0, 1.0, 1.0);
-		glBegin(GL_POINTS);
+		//glColor3f(1.0, 1.0, 1.0);
+		glColor3fv(b->color);
+		glPushMatrix();
+		/*glBegin(GL_POINTS);
 		glVertex2f(b->pos[0],      b->pos[1]);
 		glVertex2f(b->pos[0]-1.0f, b->pos[1]);
 		glVertex2f(b->pos[0]+1.0f, b->pos[1]);
@@ -1390,7 +1621,26 @@ void bulletDraw(Bullet *b)
 		glVertex2f(b->pos[0]-1.0f, b->pos[1]+1.0f);
 		glVertex2f(b->pos[0]+1.0f, b->pos[1]-1.0f);
 		glVertex2f(b->pos[0]+1.0f, b->pos[1]+1.0f);
+		glEnd();*/
+		//glTranslatef(b->origin[0], b->origin[1], b->origin[2]);
+		//glRotatef(1, 0.0f, 0.0f, 1.0f);
+		//std::cout<<"bullet angle: " << b->angle << "\n";
+		//std::cout<<"bullet posxy: " << b->pos[0] << ", " << b->pos[1] << ", " << b->pos[2] << "\n";
+
+		glBegin(GL_QUADS);
+		glVertex2f(b->pos[0]-8.0f, b->pos[1]+2.0f);
+		glVertex2f(b->pos[0]+8.0f, b->pos[1]+2.0f);
+		glVertex2f(b->pos[0]+8.0f, b->pos[1]-2.0f);
+		glVertex2f(b->pos[0]-8.0f, b->pos[1]-2.0f);
+		/*glColor3f(0.8, 0.8, 0.8);
+		glVertex2f(b->pos[0]-8.0f, b->pos[1]-8.0f);
+		glVertex2f(b->pos[0]-8.0f, b->pos[1]+8.0f);
+		glVertex2f(b->pos[0]+8.0f, b->pos[1]-8.0f);
+		glVertex2f(b->pos[0]+8.0f, b->pos[1]+8.0f);*/
 		glEnd();
+		glPopMatrix();
+
+
 		b = b->next;
 	}
 }	
@@ -1415,15 +1665,15 @@ c+=3;
 }
  */
 
-void sscreen_background(void)
+void sscreen_background(GLuint tex, float r, float g, float b, float alph)
 {
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(r, g, b, alph);
 	glClear(GL_COLOR_BUFFER_BIT);
 	//draw textured quad
 	//float wid = 120.0f;
-	glColor3f(1.0, 0.0, 0.0);
+	glColor3f(1.0, 1.0, 1.0);
 	//glColor3f(1.0, 1.0, 1.0);
-	glBindTexture(GL_TEXTURE_2D, bgTexture0);
+	glBindTexture(GL_TEXTURE_2D, tex);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
 	glTexCoord2f(0.0f, 0.0f); glVertex2i(0, yres);
