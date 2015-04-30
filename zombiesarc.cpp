@@ -127,7 +127,7 @@ struct Player {
     Vec vel;
     Vec origin;
     int score;
-    float multi;
+    int multi;
     int is_firing;
     float angle;
     float color[3];
