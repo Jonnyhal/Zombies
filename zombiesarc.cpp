@@ -39,6 +39,7 @@
 // 
 //
 #include <iostream>
+#include <string>
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
@@ -117,21 +118,30 @@ int xres=1250, yres=900;
 //images/textures
 //-----------------------------------------------------------------------------
 Ppmimage *background0 = NULL;
+Ppmimage *gameover0 = NULL;
 
 //
 GLuint bgTexture0;
+GLuint gameoverTex;
 
 struct Player {
 	Vec dir;
 	Vec pos;
 	Vec vel;
+	Flt radius;
 	int score;
+	int currentcombo;
+	int check;
+	int lives;
+	int invuln;
 	float multi;
 	int is_firing;
 	float angle;
 	float color[3];
+	struct timespec multiTimer;
 	Player() {
 		VecZero(dir);
+		currentcombo = 0;
 		pos[0] = (Flt)(xres/2);
 		pos[1] = (Flt)(yres/2);
 		pos[2] = 0.0f;
@@ -142,6 +152,10 @@ struct Player {
 		color[2] = 1.0;
 		multi = 1.0;
 		score = 0;
+		check = 0;
+		radius = 20;
+		invuln = 0;
+		lives = 3;
 	}
 };
 
@@ -219,6 +233,8 @@ struct Game {
 	Bullet *chead;
 	Bullet *dhead;
 	Zone *zhead;//update zhead to zhead->nextzone if zhead->wave
+	int gameover;
+	int running;
 	int zcnt;
 	int wcnt;
 	int zombieSpawner;
@@ -228,6 +244,7 @@ struct Game {
 	int current_selection;
 	int old_selection;
 	struct timespec bulletTimer;
+	struct timespec multiTimer;
 	Game() {
 		ahead = NULL;
 		bhead = NULL;
@@ -238,6 +255,9 @@ struct Game {
 		wcnt = 0;
 		nasteroids = 0;
 		nbullets = 0;
+		startScreen = 1;
+		gameover = 0;
+		running = 1;
 	}
 };
 
@@ -252,6 +272,7 @@ void check_resize(XEvent *e);
 void check_mouse(XEvent *e, Game *game);
 int check_keys(XEvent *e);
 void init(Game *g);
+void init_textures(Ppmimage *image, GLuint tex);
 void spawnZombies(Game *g);
 void init_sounds(void);
 void physics(Game *game);
@@ -266,7 +287,13 @@ void render_StartScreen(Game *game);
 void sscreen_background(GLuint tex, float r, float g, float b, float alph);
 void deleteZone(Game *g, Zone *node);
 void deleteWaves(Game *g, Wave *node);
+void renderscoreScreen(Game *g);
+void rendergameoverScreen(Game *g);
+void multitime(Game *g);
+void updateMulti(Game *g);
 int fib(int n);
+void screen1(Game *game);
+void screen2(Game *game);
 
 int main(void)
 {
@@ -275,44 +302,24 @@ int main(void)
 	init_opengl();
 	Game game;
 	game.current_selection = 1;
-	game.startScreen = 1;
-	int done=0;
-	int donesscreen;
+	int donesscreen = 1;
 	//sscreen_background(&game);
 	//glClearColor(0.0, 0.0, 0.0, 1.0);
-	while (game.startScreen) {
-		while (XPending(dpy)) {
-			XEvent e;
-			XNextEvent(dpy, &e);
-			check_resize(&e);
-			check_mouse(&e, &game);
-			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
-				game.startScreen = 0;
-				done = 1;
-			}
-		}
-		render_StartScreen(&game);
-		glXSwapBuffers(dpy, win);
-	}
-	//cleanupXWindows();
-	//cleanup_fonts();
-	//glClearColor(0.0, 0.0, 0.0, 1.0);
-	//init_opengl();
-	game.zombieSpawner = 60;
-	init(&game);
-	srand(time(NULL));
-	clock_gettime(CLOCK_REALTIME, &timePause);
-	clock_gettime(CLOCK_REALTIME, &timeStart);
-	game.player1.is_firing = 0;
-	//we should make a player initialization function
-	while (!done) {
+	int done=0;
+	while (game.running) {
 		while (XPending(dpy)) {
 			XEvent e;
 			XNextEvent(dpy, &e);
 			check_resize(&e);
 			check_mouse(&e, &game);
 			done = check_keys(&e);
+			if (done)
+				game.running = 0;
+			if (game.startScreen)
+				screen1(&game);
 		}
+		if (game.gameover)
+			screen2(&game); 
 		clock_gettime(CLOCK_REALTIME, &timeCurrent);
 		timeSpan = timeDiff(&timeStart, &timeCurrent);
 		timeCopy(&timeStart, &timeCurrent);
@@ -324,10 +331,63 @@ int main(void)
 		render(&game);
 		glXSwapBuffers(dpy, win);
 	}
+	
 	cleanupXWindows();
 	cleanup_fonts();
 	logClose();
 	return 0;
+}
+
+void screen1(Game *game) //start screen
+{
+	int donesscreen = 0;
+	while (game->startScreen) {
+		while (XPending(dpy)) {
+			XEvent e;
+			XNextEvent(dpy, &e);
+			check_resize(&e);
+			check_mouse(&e, game);
+			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
+				game->startScreen = 0;
+				game->running = 0;
+			}
+		}
+		render_StartScreen(game);
+		glXSwapBuffers(dpy, win);
+	}
+	//cleanupXWindows();
+	//cleanup_fonts();
+	//glClearColor(0.0, 0.0, 0.0, 1.0);
+	//init_opengl();
+	game->zombieSpawner = 60;
+	init(game);
+	srand(time(NULL));
+	clock_gettime(CLOCK_REALTIME, &timePause);
+	clock_gettime(CLOCK_REALTIME, &timeStart);
+	game->player1.is_firing = 0;
+	game->startScreen = 0;
+	//we should make a player initialization function
+}
+
+void screen2(Game *game) //game over screen
+{
+	//std::cout<<"made it here\n";
+	int donesscreen = 0;
+	while (game->gameover) {
+		while (XPending(dpy)) {
+			XEvent e;
+			XNextEvent(dpy, &e);
+			check_resize(&e);
+			check_mouse(&e, game);
+			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
+				game->running = 0;
+				game->gameover = 0;
+			}
+		}
+		rendergameoverScreen(game);
+		glXSwapBuffers(dpy, win);
+	}
+	game->gameover = 0;
 }
 
 void cleanupXWindows(void)
@@ -422,22 +482,27 @@ void init_opengl(void)
 	initialize_fonts();
 
 	//Load image files
-	background0   = ppm6GetImage("./images/ssbg.ppm");
-
-
+	background0 = ppm6GetImage("./images/ssbg.ppm");
+	gameover0   = ppm6GetImage("./images/mygameover.ppm");
 	//Generate Textures
 	glGenTextures(1, &bgTexture0);
+	init_textures(background0, bgTexture0);
+	glGenTextures(1, &gameoverTex);
+	init_textures(gameover0, gameoverTex);
 
+}
 
-
-	//background
-	glBindTexture(GL_TEXTURE_2D, bgTexture0);
+void init_textures(Ppmimage *image, GLuint tex)
+{
+	//glGenTextures(1, &tex);
+	glClearColor(1.0, 0.0, 0.0, 1.0);
+	
+	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, 3,background0->width, background0->height,
-			0, GL_RGB, GL_UNSIGNED_BYTE, background0->data);
-	//add transparency?
-
+	glTexImage2D(GL_TEXTURE_2D, 0, 3,image->width, image->height,
+			0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
+	
 
 }
 
@@ -593,6 +658,9 @@ void spawnZombies(Game *g)
 		g->nasteroids++;
 	}
 	clock_gettime(CLOCK_REALTIME, &g->bulletTimer);
+	clock_gettime(CLOCK_REALTIME, &g->multiTimer);
+	clock_gettime(CLOCK_REALTIME, &g->player1.multiTimer);
+	g->player1.radius = 10;
 	//g->zombieSpawner = 0;
 }
 
@@ -949,6 +1017,18 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 	//std::cout << "frag" << std::endl;
 }
 
+void updateMulti(Game *g)
+{
+	struct timespec bt;
+	clock_gettime(CLOCK_REALTIME, &bt);
+	double ts = timeDiff(&g->player1.multiTimer, &bt);
+	if (ts > 2) {
+		//time to reset timer.
+		g->player1.multi = 1.0;
+	}
+}
+	
+
 void updateBulletPos(Game *g, Bullet *b) 
 {
 	struct timespec bt;
@@ -1040,10 +1120,12 @@ void bul_zomb_collision(Game *g, Bullet *x)
 						g->nasteroids++;
 					}
 				} else {
-					g->player1.score += 75;
+					g->player1.multi += 0.05;
+					g->player1.score += 75 * g->player1.multi;
 					a->color[0] = 1.0;
 					a->color[1] = 0.1;
 					a->color[2] = 0.1;
+					multitime(g);
 					//asteroid is too small to break up
 					//delete the asteroid and bullet
 					Asteroid *savea = a->next;
@@ -1065,6 +1147,93 @@ void bul_zomb_collision(Game *g, Bullet *x)
 		if (a == NULL)
 			break;
 		a = a->next;
+	}
+}
+
+void player_zomb_collision(Game *g)
+{
+	Flt d0,d1,dist;
+	g->player1.check = 1;
+	while (g->player1.check) {
+		//is there a zombie within its radius?
+		Asteroid *z = g->ahead;
+		while (z) {
+			d0 = z->pos[0] - g->player1.pos[0];
+			d1 = z->pos[1] - g->player1.pos[1];
+			dist = (d0*d0 + d1*d1);
+			if (dist < (g->player1.radius*g->player1.radius)) {
+				//std::cout << "player hit" << std::endl;
+				//this player is hit.
+				if (!g->player1.invuln) {
+					g->player1.lives--;
+					std::cout<<"lives : " << g->player1.lives << "\n";
+					z->color[0] = 0.0;
+					z->color[1] = 1.0;
+					z->color[2] = 0.1;
+					g->player1.multi = 1.0;
+					//if (g->player1.lives == 1) print warning
+					if (g->player1.lives < 1) {
+						g->gameover = 1; // YOU LOSE
+					}
+					
+					//zombieflee function??
+					//DEATH ANIMATION HERE
+					int cnt = 0;
+					struct timespec deathTimer, counter;
+					clock_gettime(CLOCK_REALTIME, &deathTimer);
+					clock_gettime(CLOCK_REALTIME, &counter);
+					double ts = timeDiff(&deathTimer, &counter);
+					while (ts < 3.0) {
+						clock_gettime(CLOCK_REALTIME, &counter);
+						ts = timeDiff(&deathTimer, &counter);
+						if (ts > 0.0 && !cnt) {
+							std::cout<<"3... \n";
+							cnt = 1;
+						} else if (ts > 1.0 && cnt == 1) {
+							std::cout<<"2... \n";
+							cnt++;
+							if (g->player1.lives < 1) 
+								break;
+						} else if (ts > 2.0 && cnt == 2) {
+							std::cout<<"1... \n";
+							cnt++;
+						}
+						//revival animation?Asteroid *a = g->ahead;Asteroid *a = g->ahead;
+						Asteroid *a = g->ahead;
+						while (a) {
+							//Try nesting everything in an if/else with a randomized bool
+							//to determine if zombie is wandering or running at player?
+							a->pos[0] = 0;
+							a->pos[1] = 0;
+							//Check for collision with window edges
+							if (a->pos[0] < -100.0) {
+								a->pos[0] += (float)xres+200;
+							}
+							else if (a->pos[0] > (float)xres+100) {
+								a->pos[0] -= (float)xres+200;
+							}
+							else if (a->pos[1] < -100.0) {
+								a->pos[1] += (float)yres+200;
+							}
+							else if (a->pos[1] > (float)yres+100) {
+								a->pos[1] -= (float)yres+200;
+							}
+							a->angle += a->rotate;
+							a = a->next;
+						}
+					}
+				}
+			
+				//empower zombie? xD...
+				if (z == NULL)
+					break;
+				g->player1.pos[0] = xres/2;
+				g->player1.pos[1] = yres/2;
+				g->player1.check = 0;
+			}
+			z = z->next;
+		}
+		g->player1.check = 0;
 	}
 }
 
@@ -1099,7 +1268,8 @@ void physics(Game *g)
 			updateBulletPos(g, g->dhead);
 		}
 	}
-		
+	
+	updateMulti(g);	
 	//
 	//Update asteroid positions
 	Asteroid *a = g->ahead;
@@ -1137,6 +1307,9 @@ void physics(Game *g)
 			bul_zomb_collision(g, g->dhead);
 		}
 	}
+	
+	//Player collision with zombies
+	player_zomb_collision(g);
 	//---------------------------------------------------
 	//check keys pressed now
 	//NOTE:: ANGLE CHECKED COUNTER CLOCKWISE
@@ -1228,7 +1401,18 @@ void physics(Game *g)
 	}
 }
 
+void multitime(Game *g)
+{
+	struct timespec mt;
+	clock_gettime(CLOCK_REALTIME, &mt);
+	double ts = timeDiff(&g->player1.multiTimer, &mt);
+	if (ts > 0.1) {
+		timeCopy(&g->multiTimer, &mt);
+		timeCopy(&g->player1.multiTimer, &mt);
+	}
+	std::cout << "ts: " << ts << "\n";
 
+}
 
 void fire_weapon(Game *g) 
 {
@@ -1428,6 +1612,7 @@ void render_StartScreen(Game *g)
 	glClear(GL_COLOR_BUFFER_BIT);
 	sscreen_background(bgTexture0, 1.0, 1.0, 1.0, 1.0);
 	//
+	//XDrawString(dis,win,gc,x,y, string, strlen(string));
 	r.bot = yres - yres*0.7;
 	r.left = xres - xres*0.5;
 	r.center = 1;
@@ -1494,8 +1679,44 @@ void render_StartScreen(Game *g)
 	}
 }
 
+void rendergameoverScreen(Game *g)
+{
+	Rect r;
+	glClear(GL_COLOR_BUFFER_BIT);
+	sscreen_background(gameoverTex, 1.0, 1.0, 1.0, 1.0);
+	//glClearColor(1.0, 1.0, 1.0, 1.0);
+	//
+	r.bot = yres*0.7;
+	r.left = xres*0.5;
+	r.center = 1;
+	ggprint12(&r, 32, 0x00ff00ff, "Your SCORE IS: %i, zone: %i, wave: %i", 
+					g->player1.score, g->zcnt, g->wcnt);
+	ggprint16(&r, 32, 0x00ff00ff, "Enter Name");
+}
+
+void renderscoreScreen(Game *g)
+{
+	Rect r;
+	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	//
+	r.bot = yres*0.7;
+	r.left = xres*0.5;
+	r.center = 1;
+	ggprint16(&r, 32, 0x00ff00ff, "GAME OVER");
+	ggprint12(&r, 24, 0x00ff00ff, "A Zombie Ate Your Brains");
+	ggprint12(&r, 32, 0x00ff00ff, "Your SCORE IS: %i", g->player1.score);
+	ggprint16(&r, 32, 0x00ff00ff, "Try Again");
+	ggprint16(&r, 32, 0x00ff00ff, "Exit");
+
+
+
+
+}
+
 void render(Game *g)
 {
+	//std::cout<<"multi: " << g->player1.multi << "\n";
 	//float wid;
 	if (g->nasteroids == 0)
 		init(g);
@@ -1508,7 +1729,7 @@ void render(Game *g)
 	r.left = 10;
 	r.center = 0;
 	ggprint16(&r, 32, 0x0011ff11, "PLAYER 1 SCORE: %i", g->player1.score);
-	ggprint16(&r, 16, 0x00ff1111, "MULTI         : %i", g->player1.multi);
+	ggprint16(&r, 16, 0x00ff1111, "MULTI         : %.3g", g->player1.multi);
 	
 	ggprint8b(&r, 16, 0x00ff1111, "Zone %i, Wave %i", g->zcnt, g->wcnt);
 	ggprint8b(&r, 16, 0x00ff1111, "n bullets: %i", g->nbullets);
@@ -1537,6 +1758,28 @@ void render(Game *g)
 	glVertex2f(0.0f, 0.0f);
 	glEnd();
 	glPopMatrix();
+	if (g->player1.invuln) {
+		float col[3] = {0.0, 0.0, 0.0};
+		glColor3fv(col);
+		glPushMatrix();
+		glTranslatef(g->player1.pos[0], g->player1.pos[1], g->player1.pos[2]);
+		glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
+		glBegin(GL_TRIANGLES);
+		glVertex2f(-12.0f, -10.0f);
+		glVertex2f(  0.0f, 20.0f);
+		glVertex2f(  0.0f, -6.0f);
+		glVertex2f(  0.0f, -6.0f);
+		glVertex2f(  0.0f, 20.0f);
+		glVertex2f( 12.0f, -10.0f);
+		glEnd();
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glBegin(GL_POINTS);
+		glVertex2f(0.0f, 0.0f);
+		glEnd();
+		glPopMatrix();
+		std::cout<< "blinking!" << "\n";
+	}
+		
 	if (keys[XK_Up]) {
 		int i;
 		//draw thrust
