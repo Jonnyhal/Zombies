@@ -1222,13 +1222,13 @@ void player_zomb_collision(Game *g)
 							a = a->next;
 						}
 					}
+					g->player1.pos[0] = xres/2;
+					g->player1.pos[1] = yres/2;
 				}
 			
 				//empower zombie? xD...
 				if (z == NULL)
 					break;
-				g->player1.pos[0] = xres/2;
-				g->player1.pos[1] = yres/2;
 				g->player1.check = 0;
 			}
 			z = z->next;
@@ -1382,6 +1382,13 @@ void physics(Game *g)
 
 		}
 		bresenham_Ang(g);
+		if (keys[XK_i]) {
+			g->player1.invuln++;
+			if (g->player1.invuln == 2)
+				g->player1.invuln = 0;
+		keys[XK_i] = 0;
+		}
+		
 		if (keys[XK_space]) {
 			fire_weapon(g);
 		}
@@ -1777,7 +1784,7 @@ void render(Game *g)
 		glVertex2f(0.0f, 0.0f);
 		glEnd();
 		glPopMatrix();
-		std::cout<< "blinking!" << "\n";
+		//std::cout<< "blinking!" << "\n";
 	}
 		
 	if (keys[XK_Up]) {
