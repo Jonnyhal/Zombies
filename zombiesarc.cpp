@@ -269,6 +269,7 @@ struct Game {
 int keys[65536];
 
 //function prototypes
+void zomb_zomb_collision(Asteroid *a);
 void initXWindows(void);
 void init_opengl(void);
 void cleanupXWindows(void);
@@ -584,7 +585,8 @@ void init(Game *g) {
 void spawnZombies(Game *g) 
 {
     //build x zombies... where x = zombiespawner
-    for (int j=0; j<g->zombieSpawner; j++) {
+    //for (int j=0; j<g->zombieSpawner; j++) {
+    for (int j=0; j<5; j++) {
 	Asteroid *a = new Asteroid;
 	a->nverts = 8;
 	a->radius = 20.0;
@@ -599,10 +601,6 @@ void spawnZombies(Game *g)
 	    a->angle = 0.0;
 	    std::cout << "asteroid" << std::endl;
 	    //left part of screen 3/4 down from top
-	    if (g->wcnt > 3) {
-		a->radius = 40;
-
-	    }		
 	    if((j%5)==0){
 		a->pos[0] = (Flt)(0);
 		a->pos[1] = (Flt)(yres*0.65);
@@ -668,24 +666,18 @@ void spawnZombies(Game *g)
 	clock_gettime(CLOCK_REALTIME, &g->multiTimer);
 	clock_gettime(CLOCK_REALTIME, &g->player1.multiTimer);
 	g->player1.radius = 10;
-	//g->zombieSpawner = 0;
     
-	//g->zombieSpawner = 0;
-	//else (g->wcnt > 3) {
-		//a->radius = 40;
-		//g->zombieSpawner = 1;
-	//}		
 }
 //======Zombie movement function=======
 void zMove(Game *g, Asteroid *a)
 {
-    float d0, d1, dist;
+    Flt d0, d1, dist;
+    //zombie to player movement
     d0 = g->player1.pos[0] - a->pos[0];
     d1 = g->player1.pos[1] - a->pos[1];
     dist = sqrt(d0*d0 + d1*d1);
+    //zombie to player movement
     if (dist < 700) {
-	//g->ahead->pos[0] = g->player1.pos[0] - (d0/dist) * 1.01;
-	//g->ahead->pos[1] = g->player1.pos[1] - (d1/dist) * 1.01;
 	a->vel[0] = d0/dist * 5.0;
 	a->vel[1] = d1/dist * 5.0;
     }
@@ -1119,7 +1111,19 @@ void updateBulletPos(Game *g, Bullet *b)
 	b = b->next;
     }
 }
+void zomb_zomb_collision(Asteroid *a)
+{
+    Flt z0, z1, zdist;
+    //zombie on zombie collision
+    z0 = a->prev->pos[0] - a->next->pos[0];
+    z1 = a->prev->pos[1] - a->next->pos[1];
+    zdist = sqrt(z0*z0 + z1*z1);
+    if(zdist <= a->prev->radius) {
+	a->next->pos[0] = a->prev->pos[0] + (z0/zdist) * a->radius * 1.01;
+	a->next->pos[1] = a->prev->pos[1] + (z1/zdist) * a->radius * 1.01;
+    }
 
+}
 void bul_zomb_collision(Game *g, Bullet *x)
 {
 	Flt d0,d1,dist;
@@ -1312,6 +1316,7 @@ void physics(Game *g)
 		//Try nesting everything in an if/else with a randomized bool
 		//to determine if zombie is wandering or running at player?
 		zMove(g, a);
+		zomb_zomb_collision(a);
 		a->pos[0] += a->vel[0];
 		a->pos[1] += a->vel[1];
 		//Check for collision with window edges
