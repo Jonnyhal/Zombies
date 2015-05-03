@@ -139,7 +139,7 @@ struct Player {
 	int is_firing;
 	float angle;
 	float color[3];
-	struct timespec multiTimer;
+	struct timespec multiTimer, lootTimer;
 	Player() {
 		VecZero(dir);
 		currentcombo = 0;
@@ -238,12 +238,10 @@ struct Loot {
 	int type;
 	struct Loot *next;
 	struct Loot *prev;
-	struct timespec lootTimer;
 	Loot() {
 		prev = NULL;
 		next = NULL;
 		type = 0;
-		clock_gettime(CLOCK_REALTIME, &lootTimer);
 	}
 };
 	
@@ -321,7 +319,7 @@ void multitime(Game *g);
 void updateMulti(Game *g);
 void lootDraw(GLuint tex, Loot *l, float r, float g, float b, float alph);
 void lootDrop(Game *g, Asteroid *a);
-void lootTime(Loot *l);
+void lootTime(Game *g);
 int fib(int n);
 void zMove(Game *g);
 void screen1(Game *game);
@@ -692,6 +690,7 @@ void spawnZombies(Game *g)
 	clock_gettime(CLOCK_REALTIME, &g->bulletTimer);
 	clock_gettime(CLOCK_REALTIME, &g->multiTimer);
 	clock_gettime(CLOCK_REALTIME, &g->player1.multiTimer);
+	clock_gettime(CLOCK_REALTIME, &g->player1.lootTimer);
 	g->player1.radius = 10;
     
 }
@@ -709,8 +708,8 @@ void zMove(Game *g, Asteroid *a)
 	a->vel[1] = d1/dist * 3.0;
     }
     if (g->player1.origin[0] != g->player1.pos[0] || g->player1.origin[1] != g->player1.pos[1]) {
-	a->vel[0] = d0/dist * 4.66; //* (g->zcnt*0.333));
-	a->vel[1] = d1/dist * 4.66; //* (g->zcnt*0.333));
+	a->vel[0] = d0/dist * (4.66 * (g->zcnt*0.333));
+	a->vel[1] = d1/dist * (4.66 * (g->zcnt*0.333));
     }
 
 }
@@ -1108,12 +1107,11 @@ void lootDrop(Game *g, Asteroid *a)
 	// Create a random number from 1-100
 	int r1 = rand() % 100 + 1;
 	std::cout<<r1<<"\n";
-	if (r1%8 == 0) {
+	if (1) {
 		//we have a drop... now what will it be?
 		Loot *l = new Loot;
 		l->pos[0] = a->pos[0];
 		l->pos[1] = a->pos[1];
-		lootTime(l); //start timer
 		glEnable(GL_TEXTURE_2D);
 		initialize_fonts();
 		if (g->lhead == NULL) {
@@ -1127,65 +1125,58 @@ void lootDrop(Game *g, Asteroid *a)
 			g->lootcnt++;
 		}
 		
+		lootTime(g); //start timer
 	
-		int r2 = rand() % 100 + 1;
+		int r2 = 3;//rand() % 100 + 1;
 		if (r2 >=1 && r2 <= 40) {
 			//rapid fire!
-			g->lhead->type = 1;
 			std::cout << "RAPID FIRE DROP\n";
 			g->lhead->lootbg = ppm6GetImage("./images/doubleshot.ppm");
-			glGenTextures(1, &g->lhead->lootTex);
-			init_textures(g->lhead->lootbg, g->lhead->lootTex);
+			//glGenTextures(1, &g->lhead->lootTex);
+			//init_textures(g->lhead->lootbg, g->lhead->lootTex);
 		} else if (r2 >=41 && r2 <= 65) {
 			//double shot!
 			if (g->player1.bulletType == 2 || g->player1.bulletType == 3) {
-				g->lhead->type = 0;
 				//dead drop, drop nothing--they have double shot or better
 				std::cout << "DEAD DROP DOUBLE\n";
 				return;
 			} else {
-				g->lhead->type = 2;
 				std::cout << "DOUBLE SHOT DROP\n";
 				//draw object, texture, and create collision if player touches
 				g->lhead->lootbg = ppm6GetImage("./images/doubleshot.ppm");
-				glGenTextures(1, &g->lhead->lootTex);
-				init_textures(g->lhead->lootbg, g->lhead->lootTex);
+			//	glGenTextures(1, &g->lhead->lootTex);
+			//	init_textures(g->lhead->lootbg, g->lhead->lootTex);
 			}
 		} else if (r2 >=66 && r2 <= 77) {
 			if (g->player1.bulletType == 3) {
 				//dead drop, drop nothing--they have triple shot or better
-				g->lhead->type = 0;
 				std::cout << "DEAD DROP DOUBLE\n";
 				return;
 			} else {
 				//triple shot!
-				g->lhead->type = 3;
 				std::cout << "TRIPLE SHOT DROP\n";
-				g->lhead->lootbg = ppm6GetImage("./images/tripleshot.ppm");
-				glGenTextures(1, &g->lhead->lootTex);
-				init_textures(g->lhead->lootbg, g->lhead->lootTex);
+				g->lhead->lootbg = ppm6GetImage("./images/doubleshot.ppm");
+			//	glGenTextures(1, &g->lhead->lootTex);
+			//	init_textures(g->lhead->lootbg, g->lhead->lootTex);
 			}
 		} else if (r2 >=78 && r2 <= 87) {
 			//temp invuln!
-			g->lhead->type = 4;
 			std::cout << "INVULNERABILITY DROP\n";
 			g->lhead->lootbg = ppm6GetImage("./images/doubleshot.ppm");
-			glGenTextures(1, &g->lhead->lootTex);
-			init_textures(g->lhead->lootbg, g->lhead->lootTex);
+			//glGenTextures(1, &g->lhead->lootTex);
+			//init_textures(g->lhead->lootbg, g->lhead->lootTex);
 		} else if (r2 >=88 && r2 <= 95) {
 			//free wave clear!
-			g->lhead->type = 5;
 			std::cout << "WAVE CLEAR DROP\n";
 			g->lhead->lootbg = ppm6GetImage("./images/doubleshot.ppm");
-			glGenTextures(1, &g->lhead->lootTex);
-			init_textures(g->lhead->lootbg, g->lhead->lootTex);
+			//glGenTextures(1, &g->lhead->lootTex);
+			//init_textures(g->lhead->lootbg, g->lhead->lootTex);
 		} else {
 			//1up!!!
-			g->lhead->type = 6;
 			std::cout << "LIFE UP DROP\n";
 			g->lhead->lootbg = ppm6GetImage("./images/doubleshot.ppm");
-			glGenTextures(1, &g->lhead->lootTex);
-			init_textures(g->lhead->lootbg, g->lhead->lootTex);
+			//glGenTextures(1, &g->lhead->lootTex);
+			//init_textures(g->lhead->lootbg, g->lhead->lootTex);
 		}
 	}
 }
@@ -1595,13 +1586,13 @@ void physics(Game *g)
 	}
 }
 
-void lootTime(Loot *l)
+void lootTime(Game *g)
 {
 	struct timespec lt;
 	clock_gettime(CLOCK_REALTIME, &lt);
-	double ts = timeDiff(&l->lootTimer, &lt);
+	double ts = timeDiff(&g->player1.lootTimer, &lt);
 	if (ts > 0.1) {
-		timeCopy(&l->lootTimer, &lt);
+		timeCopy(&g->player1.lootTimer, &lt);
 	}
 }
 
@@ -1922,26 +1913,6 @@ void render(Game *g)
 	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);
 	sscreen_background(g->zhead->zTexture, 1.0, 1.0, 1.0, 1.0);
-	
-	//draw loot
-	Loot *l = new Loot;
-	l = g->lhead;
-	while (l != NULL) {
-		struct timespec bt;
-		clock_gettime(CLOCK_REALTIME, &bt);
-		double ts = timeDiff(&l->lootTimer, &bt);
-		if (ts > 3) {
-			//MAKE IT BLINK!!!!!!!!
-		}
-		if (ts > 5 || l->type == 0) {
-			//time to delete loot
-			deleteLoot(g,l);
-		} else {
-			lootDraw(l->lootTex, l ,1.0, 1.0, 1.0, 1.0);
-		}
-		l = l->next;
-		
-	}
 	//
 	r.bot = yres - 64;
 	r.left = 10;
@@ -2063,23 +2034,45 @@ void render(Game *g)
 			}
 		}
 	//Draw Loot
-	//sscreen_background(g->zhead->zTexture, 1.0, 1.0, 1.0, 1.0);
+	Loot *l = new Loot;
+	if (g->lhead != NULL) {
+		l = g->lhead;
+		struct timespec bt;
+		clock_gettime(CLOCK_REALTIME, &bt);
+		double ts = timeDiff(&g->player1.lootTimer, &bt);
+		if (ts > 6) {
+			//MAKE IT BLINK!!!!!!!!
+		}
+		if (ts > 10) {
+			//time to delete loot
+			deleteLoot(g,g->lhead);
+		} else {
+			while (l != NULL) {
+				glGenTextures(1, &l->lootTex);
+				init_textures(l->lootbg, l->lootTex);
+				lootDraw(l->lootTex, l, 1.0, 1.0, 1.0, 1.0);
+				l = l->next;
+			}
+		}
+	}
+	glClear(GL_COLOR_BUFFER_BIT);
+	sscreen_background(g->zhead->zTexture, 1.0, 1.0, 1.0, 1.0);
 	
 }
 
 void lootDraw(GLuint tex, Loot *l, float r, float g, float b, float alph)
 {
-		glClearColor(r, g, b, alph);
-		//glClear(GL_COLOR_BUFFER_BIT);
+		//glClearColor(r, g, b, alph);
+		glClear(GL_COLOR_BUFFER_BIT);
 		//draw textured quad
 		//float wid = 120.0f;
-		//glColor3f(1.0, 1.0, 1.0);
+		glColor3f(1.0, 1.0, 1.0);
 		glBindTexture(GL_TEXTURE_2D, tex);
 		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 1.0f); glVertex2i(l->pos[0]-14, l->pos[1]-14);
-		glTexCoord2f(0.0f, 0.0f); glVertex2i(l->pos[0]-14, l->pos[1]+14);
-		glTexCoord2f(1.0f, 0.0f); glVertex2i(l->pos[0]+14, l->pos[1]+14);
-		glTexCoord2f(1.0f, 1.0f); glVertex2i(l->pos[0]+14, l->pos[1]-14);
+		glTexCoord2f(0.0f, 1.0f); glVertex2i(l->pos[0]-4, l->pos[1]-4);
+		glTexCoord2f(0.0f, 0.0f); glVertex2i(l->pos[0]-4, l->pos[1]+4);
+		glTexCoord2f(1.0f, 0.0f); glVertex2i(l->pos[0]+4, l->pos[1]+4);
+		glTexCoord2f(1.0f, 1.0f); glVertex2i(l->pos[0]+4, l->pos[1]-4);
 		glEnd();
 }
 
@@ -2147,7 +2140,6 @@ c+=3;
 
 void sscreen_background(GLuint tex, float r, float g, float b, float alph)
 {
-	
 	glClearColor(r, g, b, alph);
 	glClear(GL_COLOR_BUFFER_BIT);
 	//draw textured quad
