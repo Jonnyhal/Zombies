@@ -118,14 +118,20 @@ int xres=1250, yres=900;
 //-----------------------------------------------------------------------------
 Ppmimage *background0 = NULL;
 Ppmimage *gameover0 = NULL;
+<<<<<<< HEAD
 Ppmimage *player1 = NULL;
 Ppmimage *zombie0 = NULL;
+=======
+>>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 
 //
 GLuint bgTexture0;
 GLuint gameoverTex;
+<<<<<<< HEAD
 GLuint player1Tex;
 GLuint zombieTex;
+=======
+>>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 
 struct Player {
 	Vec dir;
@@ -521,17 +527,23 @@ void init_opengl(void)
 	//Load image files
 	background0 = ppm6GetImage("./images/ssbg.ppm");
 	gameover0   = ppm6GetImage("./images/mygameover.ppm");
+<<<<<<< HEAD
 	player1     = ppm6GetImage("./images/soldier.ppm");
 	zombie0     = ppm6GetImage("./images/zombie.ppm");
+=======
+>>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 	//Generate Textures
 	glGenTextures(1, &bgTexture0);
 	init_textures(background0, bgTexture0);
 	glGenTextures(1, &gameoverTex);
 	init_textures(gameover0, gameoverTex);
+<<<<<<< HEAD
 	glGenTextures(1, &player1Tex);
 	init_textures(player1, player1Tex);
 	glGenTextures(1, &zombieTex);
 	init_textures(zombie0, zombieTex);
+=======
+>>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 
 }
 
@@ -1985,6 +1997,7 @@ void render(Game *g)
 	glTranslatef(g->player1.pos[0], g->player1.pos[1], g->player1.pos[2]);
 	//float angle = atan2(player1.dir[1], player1.dir[0]);
 	//std::cout<<"angle = " << g->player1.angle << std::endl;
+<<<<<<< HEAD
 	glBindTexture(GL_TEXTURE_2D, player1Tex);
 	glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_ALPHA_TEST);
@@ -2001,6 +2014,68 @@ void render(Game *g)
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_ALPHA_TEST);
 	
+=======
+	glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
+	glBegin(GL_TRIANGLES);
+	//glVertex2f(-10.0f, -10.0f);
+	//glVertex2f(  0.0f, 20.0f);
+	//glVertex2f( 10.0f, -10.0f);
+	glVertex2f(-12.0f, -10.0f);
+	glVertex2f(  0.0f, 20.0f);
+	glVertex2f(  0.0f, -6.0f);
+	glVertex2f(  0.0f, -6.0f);
+	glVertex2f(  0.0f, 20.0f);
+	glVertex2f( 12.0f, -10.0f);
+	glEnd();
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glBegin(GL_POINTS);
+	glVertex2f(0.0f, 0.0f);
+	glEnd();
+	glPopMatrix();
+	if (g->player1.invuln) {
+		float col[3] = {0.0, 0.0, 0.0};
+		glColor3fv(col);
+		glPushMatrix();
+		glTranslatef(g->player1.pos[0], g->player1.pos[1], g->player1.pos[2]);
+		glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
+		glBegin(GL_TRIANGLES);
+		glVertex2f(-12.0f, -10.0f);
+		glVertex2f(  0.0f, 20.0f);
+		glVertex2f(  0.0f, -6.0f);
+		glVertex2f(  0.0f, -6.0f);
+		glVertex2f(  0.0f, 20.0f);
+		glVertex2f( 12.0f, -10.0f);
+		glEnd();
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glBegin(GL_POINTS);
+		glVertex2f(0.0f, 0.0f);
+		glEnd();
+		glPopMatrix();
+		//std::cout<< "blinking!" << "\n";
+	}
+
+	if (keys[XK_Up]) {
+		int i;
+		//draw thrust
+		Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
+		//convert angle to a vector
+		Flt xdir = cos(rad);
+		Flt ydir = sin(rad);
+		Flt xs,ys,xe,ye,r;
+		glBegin(GL_LINES);
+		for (i=0; i<16; i++) {
+			xs = -xdir * 11.0f + rnd() * 4.0 - 2.0;
+			ys = -ydir * 11.0f + rnd() * 4.0 - 2.0;
+			r = rnd()*40.0+40.0;
+			xe = -xdir * r + rnd() * 18.0 - 9.0;
+			ye = -ydir * r + rnd() * 18.0 - 9.0;
+			glColor3f(rnd()*.3+.7, rnd()*.3+.7, 0);
+			glVertex2f(g->player1.pos[0]+xs,g->player1.pos[1]+ys);
+			glVertex2f(g->player1.pos[0]+xe,g->player1.pos[1]+ye);
+		}
+		glEnd();
+	}
+>>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 	//-------------------------------------------------------------------------
 	//Draw the asteroids
 	{
@@ -2010,6 +2085,7 @@ void render(Game *g)
 			glColor3fv(a->color);
 			glPushMatrix();
 			glTranslatef(a->pos[0], a->pos[1], a->pos[2]);
+<<<<<<< HEAD
 			glBindTexture(GL_TEXTURE_2D, zombieTex);
 			glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
 			glEnable(GL_ALPHA_TEST);
@@ -2025,6 +2101,14 @@ void render(Game *g)
 			glPopMatrix();
 			glBindTexture(GL_TEXTURE_2D, 0);
 			glDisable(GL_ALPHA_TEST);
+=======
+			glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
+			glBegin(GL_QUADS);
+			glVertex2i(-20,-20);
+			glVertex2i(-20, 20);
+			glVertex2i( 20, 20);
+			glVertex2i( 20,-20);
+>>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 			
 			//Log("%i verts\n",a->nverts);
 			//for (int j=0; j<a->nverts; j++) {
@@ -2038,8 +2122,13 @@ void render(Game *g)
 			//glEnd();
 			glPopMatrix();
 			glColor3f(1.0f, 0.0f, 0.0f);
+<<<<<<< HEAD
 //			glBegin(GL_POINTS);
 //			glVertex2f(a->pos[0], a->pos[1]);
+=======
+			glBegin(GL_POINTS);
+			glVertex2f(a->pos[0], a->pos[1]);
+>>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 			glEnd();
 			a = a->next;
 		}
