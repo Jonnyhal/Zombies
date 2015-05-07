@@ -119,12 +119,14 @@ Ppmimage *background0 = NULL;
 Ppmimage *gameover0 = NULL;
 Ppmimage *player1 = NULL;
 Ppmimage *zombie0 = NULL;
+Ppmimage *blackicon = NULL;
 
 //
 GLuint bgTexture0;
 GLuint gameoverTex;
 GLuint player1Tex;
 GLuint zombieTex;
+GLuint blackiconTex;
 
 struct Player {
 	Vec dir;
@@ -523,11 +525,13 @@ void init_opengl(void)
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
 
+	char tempname[] = "./images/ssbg.ppm";
 	//Load image files
-	background0 = ppm6GetImage("./images/ssbg.ppm");
+	background0 = ppm6GetImage(tempname);
 	gameover0   = ppm6GetImage("./images/mygameover.ppm");
 	player1     = ppm6GetImage("./images/soldier.ppm");
 	zombie0     = ppm6GetImage("./images/zombie.ppm");
+	blackicon   = ppm6GetImage("./images/blackico.ppm");
 	//Generate Textures
 	glGenTextures(1, &bgTexture0);
 	init_textures(background0, bgTexture0);
@@ -537,6 +541,8 @@ void init_opengl(void)
 	init_textures(player1, player1Tex);
 	glGenTextures(1, &zombieTex);
 	init_textures(zombie0, zombieTex);
+	glGenTextures(1, &blackiconTex);
+	init_textures(blackicon, blackiconTex);
 
 }
 
@@ -688,6 +694,7 @@ void spawnZombies(Game *g)
 			a->color[2] = 1.0;
 			a->vel[0] = (Flt)(rnd()*(-2.0));
 			a->vel[1] = (Flt)(rnd()*(0));
+			//flips out occasionally, angle is always wrong at spawn~bware
 		}
 		//top
 		if((j%5)==4){
@@ -699,6 +706,7 @@ void spawnZombies(Game *g)
 			a->color[2] = 1.0;
 			a->vel[0] = (Flt)(0);
 			a->vel[1] = (Flt)(rnd()*(-2.0));
+			//angle occasionally wrong at spawn
 		}	
 		//add to front of linked list
 		a->next = g->ahead;
@@ -1202,14 +1210,14 @@ void lootDrop(Game *g, Zombie *a)
 			//free wave clear!
 			g->lhead->type = 5;
 			std::cout << "WAVE CLEAR DROP\n";
-			g->lhead->lootbg = ppm6GetImage("./images/doubleshot.ppm");
+			g->lhead->lootbg = ppm6GetImage("./images/nuke.ppm");
 			glGenTextures(1, &g->lhead->lootTex);
 			init_textures(g->lhead->lootbg, g->lhead->lootTex);
 		} else {
 			//1up!!!
 			g->lhead->type = 6;
 			std::cout << "LIFE UP DROP\n";
-			g->lhead->lootbg = ppm6GetImage("./images/doubleshot.ppm");
+			g->lhead->lootbg = ppm6GetImage("./images/lifeup.ppm");
 			glGenTextures(1, &g->lhead->lootTex);
 			init_textures(g->lhead->lootbg, g->lhead->lootTex);
 		}
@@ -1971,8 +1979,21 @@ void render(Game *g)
 		double ts = timeDiff(&l->lootTimer, &bt);
 		if (ts > 3) {
 			//MAKE IT BLINK!!!!!!!!
-		}
-		if (ts > 5 || l->type == 0) {
+			if (ts < 3.15)
+				lootDraw(l->lootTex, l ,1.0, 1.0, 1.0, 1.0);
+			else if(ts > 3.30 && ts < 3.45)
+				lootDraw(l->lootTex, l ,1.0, 1.0, 1.0, 1.0);
+			else if(ts > 3.60 && ts < 3.75)
+				lootDraw(l->lootTex, l ,1.0, 1.0, 1.0, 1.0);
+			else if(ts > 3.90 && ts < 4.05)
+				lootDraw(l->lootTex, l ,1.0, 1.0, 1.0, 1.0);
+			else if(ts > 4.20 && ts < 4.35)
+				lootDraw(l->lootTex, l ,1.0, 1.0, 1.0, 1.0);
+			else if(ts > 4.50 && ts < 4.65)
+				lootDraw(l->lootTex, l ,1.0, 1.0, 1.0, 1.0);
+			else if(ts > 4.80 && ts < 5.00)
+				lootDraw(l->lootTex, l ,1.0, 1.0, 1.0, 1.0);
+		} else if (ts > 5 || l->type == 0) {
 			//time to delete loot
 			deleteLoot(g,l);
 		} else {
@@ -2052,7 +2073,7 @@ void render(Game *g)
 		//std::cout<< "blinking!" << "\n";
 	}
 
-	if (keys[XK_Up]) {
+	/*if (keys[XK_Up]) {
 		int i;
 		//draw thrust
 		Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
@@ -2072,9 +2093,9 @@ void render(Game *g)
 			glVertex2f(g->player1.pos[0]+xe,g->player1.pos[1]+ye);
 		}
 		glEnd();
-	}
+	}*/
 	//-------------------------------------------------------------------------
-	//Draw the asteroids
+	//Draw the zombies
 	{
 		Zombie *a = g->ahead;
 		while (a) {
