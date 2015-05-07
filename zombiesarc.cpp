@@ -92,7 +92,6 @@ GC gc;
 Flt last_Position_S;
 static int savex = 0;
 static int savey = 0;
-int zombieSpawn = 5;
 //
 //-----------------------------------------------------------------------------
 //Setup timers
@@ -118,20 +117,14 @@ int xres=1250, yres=900;
 //-----------------------------------------------------------------------------
 Ppmimage *background0 = NULL;
 Ppmimage *gameover0 = NULL;
-<<<<<<< HEAD
 Ppmimage *player1 = NULL;
 Ppmimage *zombie0 = NULL;
-=======
->>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 
 //
 GLuint bgTexture0;
 GLuint gameoverTex;
-<<<<<<< HEAD
 GLuint player1Tex;
 GLuint zombieTex;
-=======
->>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 
 struct Player {
 	Vec dir;
@@ -223,20 +216,22 @@ struct Bullet {
 	}
 };
 
-struct Asteroid {
+struct Zombie {
 	Vec pos;
 	Vec vel;
 	int nverts;
+	int hitpoints;
 	Flt radius;
 	Vec vert[8];
 	float angle;
 	float rotate;
 	float color[3];
-	struct Asteroid *prev;
-	struct Asteroid *next;
-	Asteroid() {
+	struct Zombie *prev;
+	struct Zombie *next;
+	Zombie() {
 		prev = NULL;
 		next = NULL;
+		hitpoints = 1;
 	}
 
 };
@@ -260,11 +255,11 @@ struct Loot {
 
 struct Game {
 	Player player1;
-	Asteroid *ahead;
+	Zombie *ahead;//zombies
 	Bullet *bhead;
 	Bullet *chead;
 	Bullet *dhead;
-	Zone *zhead;//update zhead to zhead->nextzone if zhead->wave
+	Zone *zhead;//zone, not zombie
 	Loot *lhead;
 	int gameover;
 	int running;
@@ -272,7 +267,7 @@ struct Game {
 	int zcnt;
 	int wcnt;
 	int zombieSpawn;
-	int nasteroids;
+	int nzombies;
 	int nbullets;
 	int startScreen;
 	int current_selection;
@@ -289,7 +284,7 @@ struct Game {
 		zcnt = 0;
 		wcnt = 0;
 		lootcnt = 0;
-		nasteroids = 0;
+		nzombies = 0;
 		nbullets = 0;
 		startScreen = 1;
 		gameover = 0;
@@ -302,7 +297,7 @@ struct Game {
 int keys[65536];
 
 //function prototypes
-void zomb_zomb_collision(Asteroid *a);
+void zomb_zomb_collision(Zombie *a);
 void initXWindows(void);
 void init_opengl(void);
 void cleanupXWindows(void);
@@ -331,7 +326,7 @@ void rendergameoverScreen(Game *g);
 void multitime(Game *g);
 void updateMulti(Game *g);
 void lootDraw(GLuint tex, Loot *l, float r, float g, float b, float alph);
-void lootDrop(Game *g, Asteroid *a);
+void lootDrop(Game *g, Zombie *a);
 void lootTime(Loot *l);
 int fib(int n);
 void zMove(Game *g);
@@ -368,9 +363,13 @@ int main(void)
 		while (physicsCountdown >= physicsRate) {
 			physics(&game);
 			physicsCountdown -= physicsRate;
+			if (game.gameover) {
+				screen2(&game); 
+				break;
+			}
 		}
-		if (game.gameover)
-			screen2(&game); 
+		//if (game.gameover)
+		//	screen2(&game); 
 		render(&game);
 		glXSwapBuffers(dpy, win);
 		
@@ -403,7 +402,7 @@ void screen1(Game *game) //start screen
 	//glClearColor(0.0, 0.0, 0.0, 1.0);
 	//init_opengl();
 	//game->zombieSpawn = 60;
-	init(game);
+	//init(game);
 	srand(time(NULL));
 	clock_gettime(CLOCK_REALTIME, &timePause);
 	clock_gettime(CLOCK_REALTIME, &timeStart);
@@ -527,23 +526,17 @@ void init_opengl(void)
 	//Load image files
 	background0 = ppm6GetImage("./images/ssbg.ppm");
 	gameover0   = ppm6GetImage("./images/mygameover.ppm");
-<<<<<<< HEAD
 	player1     = ppm6GetImage("./images/soldier.ppm");
 	zombie0     = ppm6GetImage("./images/zombie.ppm");
-=======
->>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 	//Generate Textures
 	glGenTextures(1, &bgTexture0);
 	init_textures(background0, bgTexture0);
 	glGenTextures(1, &gameoverTex);
 	init_textures(gameover0, gameoverTex);
-<<<<<<< HEAD
 	glGenTextures(1, &player1Tex);
 	init_textures(player1, player1Tex);
 	glGenTextures(1, &zombieTex);
 	init_textures(zombie0, zombieTex);
-=======
->>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 
 }
 
@@ -581,9 +574,6 @@ void init(Game *g) {
 	std::cout<<"zcnt: " << g->zcnt;
 	std::cout<<" wcnt: " << g->wcnt;
 
-	if (g->wcnt > 0) {
-		g->zombieSpawn += 5;
-	}
 	if (g->wcnt > 3) {
 		Zone *z = new Zone;
 		z->wave = new Wave;
@@ -636,10 +626,12 @@ void init(Game *g) {
 
 void spawnZombies(Game *g) 
 {
+	std::cout<<"\nwcnt in spawnZombies: " << g->wcnt << "\n";
+	std::cout<<"zcnt in spawnZombies: " << g->zcnt << "\n";
 	//build x zombies... where x = zombiespawner
 	//for (int j=0; j<g->zombieSpawner; j++) {
 	for (int j=0; j<g->zombieSpawn; j++) {
-		Asteroid *a = new Asteroid;
+		Zombie *a = new Zombie;
 		a->nverts = 4;
 		a->radius = 20.0;
 		Flt r2 = a->radius / 2.0;
@@ -651,6 +643,7 @@ void spawnZombies(Game *g)
 			angle += inc;
 		}
 		a->angle = 0.0;
+		a->hitpoints = g->zcnt - 1;
 		//std::cout << "asteroid" << std::endl;
 		//left part of screen 3/4 down from top
 		if((j%5)==0){
@@ -712,7 +705,7 @@ void spawnZombies(Game *g)
 		if (g->ahead != NULL)
 			g->ahead->prev = a;
 		g->ahead = a;
-		g->nasteroids++;
+		g->nzombies++;
 	}
 	clock_gettime(CLOCK_REALTIME, &g->bulletTimer);
 	clock_gettime(CLOCK_REALTIME, &g->multiTimer);
@@ -721,7 +714,7 @@ void spawnZombies(Game *g)
 
 }
 //======Zombie movement function=======
-void zMove(Game *g, Asteroid *a)
+void zMove(Game *g, Zombie *a)
 {
 	Flt d0, d1, dist;
 	float x0, y0, x1, y1;
@@ -1022,7 +1015,7 @@ void deleteBullet(Game *g, Bullet *node)
 	}
 }
 
-void deleteAsteroid(Game *g, Asteroid *node)
+void deleteZombie(Game *g, Zombie *node)
 {
 	//remove a node from linked list
 	if (g){}
@@ -1100,7 +1093,7 @@ void deleteWaves(Game *g, Wave *node)
 	}
 }
 
-void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
+void buildZombieFragment(Zombie *ta, Zombie *a)
 {
 	//build ta from a
 	ta->nverts = 8;
@@ -1136,7 +1129,7 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 	-  8% chance to drop screen clear(won't work on boss)
 	- 10% chance to drop 10s invulnerability
 =============================================*/
-void lootDrop(Game *g, Asteroid *a)
+void lootDrop(Game *g, Zombie *a)
 {
 	// Create a random number from 1-100
 	int r1 = rand() % 100 + 1;
@@ -1294,9 +1287,9 @@ void updateBulletPos(Game *g, Bullet *b)
 	}
 }
 
-void zomb_zomb_collision(Asteroid *a)
+void zomb_zomb_collision(Zombie *a)
 {
-	Asteroid *b = a->prev;
+	Zombie *b = a->prev;
 	Flt z0, z1, zdist;
 	//zombie on zombie collision
 	if (b) {
@@ -1316,7 +1309,7 @@ void zomb_zomb_collision(Asteroid *a)
 void bul_zomb_collision(Game *g, Bullet *x)
 {
 	Flt d0,d1,dist;
-	Asteroid *a = g->ahead;
+	Zombie *a = g->ahead;
 	while (a) {
 		//is there a bullet within its radius?
 		Bullet *b = x;
@@ -1327,38 +1320,39 @@ void bul_zomb_collision(Game *g, Bullet *x)
 			if (dist < (a->radius*a->radius)) {
 				//std::cout << "asteroid hit." << std::endl;
 				//this asteroid is hit.
-				lootDrop(g, a);
-				if (a->radius > 20.0) {
+				/*if (a->radius > 20.0) {
 					g->player1.score += 200;
 					//break it into pieces.
-					Asteroid *ta = a;
-					buildAsteroidFragment(ta, a);
+					Zombie *ta = a;
+					buildZombieFragment(ta, a);
 					int r = rand()%10+5;
 					for (int k=0; k<r; k++) {
 						//get the next asteroid position in the array
-						Asteroid *ta = new Asteroid;
-						buildAsteroidFragment(ta, a);
+						Zombie *ta = new Zombie;
+						buildZombieFragment(ta, a);
 						//add to front of asteroid linked list
 						ta->next = g->ahead;
 						if (g->ahead != NULL)
 							g->ahead->prev = ta;
 						g->ahead = ta;
-						g->nasteroids++;
+						g->nzombies++;
 					}
-				} else {
-					g->player1.multi += 0.05;
-					g->player1.score += 75 * g->player1.multi;
-					a->color[0] = 1.0;
-					a->color[1] = 0.1;
-					a->color[2] = 0.1;
-					multitime(g);
-					//asteroid is too small to break up
-					//delete the asteroid and bullet
-					Asteroid *savea = a->next;
-					deleteAsteroid(g, a);
-					a = savea;
-					g->nasteroids--;
-				}
+				} else {*/
+					if(a->hitpoints == 0) {
+						g->player1.multi += 0.05;
+						g->player1.score += 75 * g->player1.multi;
+						multitime(g);
+						lootDrop(g, a);
+						//asteroid is too small to break up
+						//delete the asteroid and bullet
+						Zombie *savea = a->next;
+						deleteZombie(g, a);
+						a = savea;
+						g->nzombies--;
+					} else {
+						a->hitpoints--;
+					}
+				//}
 				//delete the bullet...
 				Bullet *saveb = b->next;
 				deleteBullet(g, b);
@@ -1382,7 +1376,7 @@ void player_zomb_collision(Game *g)
 	g->player1.check = 1;
 	while (g->player1.check) {
 		//is there a zombie within its radius?
-		Asteroid *z = g->ahead;
+		Zombie *z = g->ahead;
 		while (z) {
 			d0 = z->pos[0] - g->player1.pos[0];
 			d1 = z->pos[1] - g->player1.pos[1];
@@ -1400,6 +1394,7 @@ void player_zomb_collision(Game *g)
 					//if (g->player1.lives == 1) print warning
 					if (g->player1.lives < 1) {
 						g->gameover = 1; // YOU LOSE
+						std::cout<<"returning\n";
 						return;
 					}
 
@@ -1423,8 +1418,8 @@ void player_zomb_collision(Game *g)
 							std::cout<<"1... \n";
 							cnt++;
 						}
-						//revival animation?Asteroid *a = g->ahead;Asteroid *a = g->ahead;
-						Asteroid *a = g->ahead;
+						//revival animation?Zombie *a = g->ahead;Zombie *a = g->ahead;
+						Zombie *a = g->ahead;
 						while (a) {
 							//Try nesting everything in an if/else with a randomized bool
 							//to determine if zombie is wandering or running at player?
@@ -1453,7 +1448,7 @@ void player_zomb_collision(Game *g)
 
 				//empower zombie? xD...
 				if (z == NULL)
-					break;
+					return;
 				g->player1.check = 0;
 			}
 			z = z->next;
@@ -1500,7 +1495,7 @@ void physics(Game *g)
 	updateMulti(g);	
 	//
 	//Update asteroid positions
-	Asteroid *a = g->ahead;
+	Zombie *a = g->ahead;
 	while (a) {
 		//Try nesting everything in an if/else with a randomized bool
 		//to determine if zombie is wandering or running at player?
@@ -1524,7 +1519,7 @@ void physics(Game *g)
 		a->angle += a->rotate;
 		a = a->next;
 	}
-        //Asteroid collision with bullets?
+        //Zombie collision with bullets?
         //If collision detected:
         //     1. delete the bullet
         //     2. break the asteroid into pieces
@@ -1539,6 +1534,10 @@ void physics(Game *g)
 	
 	//Player collision with zombies
 	player_zomb_collision(g);
+	if(g->gameover) {
+		std::cout<<"returning again\n";
+		return;
+	}
 	//---------------------------------------------------
 	//check keys pressed now
 	//NOTE:: ANGLE CHECKED COUNTER CLOCKWISE
@@ -1954,8 +1953,10 @@ void render(Game *g)
 {
 	//std::cout<<"multi: " << g->player1.multi << "\n";
 	//float wid;
-	if (g->nasteroids == 0)
+	if (g->nzombies == 0) {
 		init(g);
+		std::cout<<"here\n";
+	}
 
 	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -1989,7 +1990,7 @@ void render(Game *g)
 
 	ggprint8b(&r, 16, 0x00ff1111, "Zone %i, Wave %i", g->zcnt, g->wcnt);
 	ggprint8b(&r, 16, 0x00ff1111, "n bullets: %i", g->nbullets);
-	ggprint8b(&r, 16, 0x00ff1111, "Zombies left: %i", g->nasteroids);
+	ggprint8b(&r, 16, 0x00ff1111, "Zombies left: %i", g->nzombies);
 	//-------------------------------------------------------------------------
 	//Draw the player1
 	glColor3fv(g->player1.color);
@@ -1997,7 +1998,6 @@ void render(Game *g)
 	glTranslatef(g->player1.pos[0], g->player1.pos[1], g->player1.pos[2]);
 	//float angle = atan2(player1.dir[1], player1.dir[0]);
 	//std::cout<<"angle = " << g->player1.angle << std::endl;
-<<<<<<< HEAD
 	glBindTexture(GL_TEXTURE_2D, player1Tex);
 	glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_ALPHA_TEST);
@@ -2013,9 +2013,7 @@ void render(Game *g)
 	glPopMatrix();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_ALPHA_TEST);
-	
-=======
-	glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
+	//glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
 	glBegin(GL_TRIANGLES);
 	//glVertex2f(-10.0f, -10.0f);
 	//glVertex2f(  0.0f, 20.0f);
@@ -2075,17 +2073,15 @@ void render(Game *g)
 		}
 		glEnd();
 	}
->>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 	//-------------------------------------------------------------------------
 	//Draw the asteroids
 	{
-		Asteroid *a = g->ahead;
+		Zombie *a = g->ahead;
 		while (a) {
 			//Log("draw asteroid...\n");
 			glColor3fv(a->color);
 			glPushMatrix();
 			glTranslatef(a->pos[0], a->pos[1], a->pos[2]);
-<<<<<<< HEAD
 			glBindTexture(GL_TEXTURE_2D, zombieTex);
 			glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
 			glEnable(GL_ALPHA_TEST);
@@ -2101,14 +2097,12 @@ void render(Game *g)
 			glPopMatrix();
 			glBindTexture(GL_TEXTURE_2D, 0);
 			glDisable(GL_ALPHA_TEST);
-=======
-			glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
+			//glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
 			glBegin(GL_QUADS);
 			glVertex2i(-20,-20);
 			glVertex2i(-20, 20);
 			glVertex2i( 20, 20);
 			glVertex2i( 20,-20);
->>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 			
 			//Log("%i verts\n",a->nverts);
 			//for (int j=0; j<a->nverts; j++) {
@@ -2122,13 +2116,10 @@ void render(Game *g)
 			//glEnd();
 			glPopMatrix();
 			glColor3f(1.0f, 0.0f, 0.0f);
-<<<<<<< HEAD
 //			glBegin(GL_POINTS);
 //			glVertex2f(a->pos[0], a->pos[1]);
-=======
 			glBegin(GL_POINTS);
 			glVertex2f(a->pos[0], a->pos[1]);
->>>>>>> 01397488c42282175b4f8f9a1d38a60df0066d04
 			glEnd();
 			a = a->next;
 		}
