@@ -659,7 +659,7 @@ void spawnZombies(Game *g)
 			a->color[0] = 0.5;
 			a->color[1] = 2.5;
 			a->color[2] = 1.0;
-			a->vel[0] = (Flt)(rnd()*2.0);
+			a->vel[0] = (Flt)(2.0);
 			a->vel[1] = (Flt)(0);
 		}
 		//left part of screen 1/4 down from the top
@@ -670,7 +670,7 @@ void spawnZombies(Game *g)
 			a->color[0] = 0.5;
 			a->color[1] = 2.5;
 			a->color[2] = 1.0;
-			a->vel[0] = (Flt)(rnd()*2.0);
+			a->vel[0] = (Flt)(2.0);
 			a->vel[1] = (Flt)(0);
 		}
 		//bottom
@@ -692,8 +692,8 @@ void spawnZombies(Game *g)
 			a->color[0] = 0.5;
 			a->color[1] = 2.5;
 			a->color[2] = 1.0;
-			a->vel[0] = (Flt)(rnd()*(-2.0));
-			a->vel[1] = (Flt)(rnd()*(0));
+			a->vel[0] = (Flt)((-2.0));
+			a->vel[1] = (Flt)((0));
 			//flips out occasionally, angle is always wrong at spawn~bware
 		}
 		//top
@@ -705,7 +705,7 @@ void spawnZombies(Game *g)
 			a->color[1] = 2.5;
 			a->color[2] = 1.0;
 			a->vel[0] = (Flt)(0);
-			a->vel[1] = (Flt)(rnd()*(-2.0));
+			a->vel[1] = (Flt)((-2.0));
 			//angle occasionally wrong at spawn
 		}	
 		//add to front of linked list
@@ -731,12 +731,12 @@ void zMove(Game *g, Zombie *a)
 	d1 = g->player1.pos[1] - a->pos[1];
 	dist = sqrt(d0*d0 + d1*d1);
 	if (dist < 700) {
-		a->vel[0] = d0/dist * 5.0;
-		a->vel[1] = d1/dist * 5.0;
+		a->vel[0] = d0/dist * 2.0;
+		a->vel[1] = d1/dist * 2.0;
 	}
 	if (g->player1.origin[0] != g->player1.pos[0] || g->player1.origin[1] != g->player1.pos[1]) {
-		a->vel[0] = d0/dist * 5.0;
-		a->vel[1] = d1/dist * 5.0;
+		a->vel[0] = d0/dist * 2.0;
+		a->vel[1] = d1/dist * 2.0;
 	}
 	//rotate zombie to chase player
 	x0 = g->player1.pos[0], y0 = g->player1.pos[1];
@@ -1564,44 +1564,44 @@ void physics(Game *g)
 	}
 	else if ((keys[XK_Up] || keys[XK_w]) && (keys[XK_Left] || keys[XK_a])) {
 		normalize(g->player1.vel);
-		g->player1.vel[0] = -4;
-		g->player1.vel[1] = 4;
+		g->player1.vel[0] = -3;
+		g->player1.vel[1] = 3;
 	}
 	else if ((keys[XK_Down] || keys[XK_s]) && (keys[XK_Left] || keys[XK_a])) {
 		normalize(g->player1.vel);
-		g->player1.vel[0] = -4;
-		g->player1.vel[1] = -4;
+		g->player1.vel[0] = -3;
+		g->player1.vel[1] = -3;
 	}
 	else if ((keys[XK_Down] || keys[XK_s]) && (keys[XK_Right] || keys[XK_d])) {
 		normalize(g->player1.vel);
-		g->player1.vel[0] = 4;
-		g->player1.vel[1] = -4;
+		g->player1.vel[0] = 3;
+		g->player1.vel[1] = -3;
 
 	}
 	else if ((keys[XK_Up] || keys[XK_w]) && (keys[XK_Right] || keys[XK_d])) {
 		normalize(g->player1.vel);
-		g->player1.vel[0] = 4;
-		g->player1.vel[1] = 4;
+		g->player1.vel[0] = 3;
+		g->player1.vel[1] = 3;
 
 	}
 	else if (keys[XK_Left] || keys[XK_a]) {
 		normalize(g->player1.vel);
-		g->player1.vel[0] = -8;
+		g->player1.vel[0] = -4;
 
 	}
 	else if (keys[XK_Right] || keys[XK_d]) {
 		normalize(g->player1.vel);
-		g->player1.vel[0] = 8;
+		g->player1.vel[0] = 4;
 
 	}
 	else if (keys[XK_Up] || keys[XK_w]) {
 		normalize(g->player1.vel);
-		g->player1.vel[1] = 8;
+		g->player1.vel[1] = 4;
 
 	}
 	else if (keys[XK_Down] || keys[XK_s]) {
 		normalize(g->player1.vel);
-		g->player1.vel[1] = -8;
+		g->player1.vel[1] = -4;
 
 	}
 	else {
