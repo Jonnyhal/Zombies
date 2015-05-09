@@ -10,7 +10,7 @@ extern void deleteLoot(Game *g, Loot *loot);
 extern void deleteZombie(Game *g, Zombie *node);
 extern void deleteBullet(Game *g, Bullet *node);
 
-void deleteLoot(Game *g, Loot *loot)
+extern void deleteLoot(Game *g, Loot *loot)
 {
     if (loot){
         //remove a node from linked list
@@ -35,7 +35,7 @@ void deleteLoot(Game *g, Loot *loot)
     }
 }
 
-void deleteBullet(Game *g, Bullet *node)
+extern void deleteBullet(Game *g, Bullet *node)
 {
         //remove a node from linked list
         if (node->type == 1) {
@@ -95,7 +95,7 @@ void deleteBullet(Game *g, Bullet *node)
         }
 }
 
-void deleteZombie(Game *g, Zombie *node)
+extern void deleteZombie(Game *g, Zombie *node)
 {
         //remove a node from linked list
         if (g){}
@@ -121,7 +121,7 @@ void deleteZombie(Game *g, Zombie *node)
         }
 }
 
-void deleteZone(Game *g, Zone *node)
+extern void deleteZone(Game *g, Zone *node)
 {
         //remove a node from linked list
         deleteWaves(g, node->wave);
@@ -147,7 +147,7 @@ void deleteZone(Game *g, Zone *node)
         }
 }
 
-void deleteWaves(Game *g, Wave *node)
+extern void deleteWaves(Game *g, Wave *node)
 {
         //remove a node from linked list
         if (g){}

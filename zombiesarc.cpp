@@ -55,63 +55,24 @@
 extern "C" {
 #include "fonts.h"
 #include "ppm.h"
+#include "struct.h"
 }
 
-//defined types
-typedef float Flt;
-typedef float Vec[3];
-typedef Flt	Matrix[4][4];
-
-//macros -- move these to a separate file? -bware
-#define checkImageWidth 64
-#define checkImageHeight 64
-#define rnd() (((double)rand())/(double)RAND_MAX)
-#define random(a) (rand()%a)
-#define VecZero(v) (v)[0]=0.0,(v)[1]=0.0,(v)[2]=0.0
-#define MakeVector(x, y, z, v) (v)[0]=(x),(v)[1]=(y),(v)[2]=(z)
-#define VecCopy(a,b) (b)[0]=(a)[0];(b)[1]=(a)[1];(b)[2]=(a)[2]
-#define VecDot(a,b)	((a)[0]*(b)[0]+(a)[1]*(b)[1]+(a)[2]*(b)[2])
-#define VecSub(a,b,c) (c)[0]=(a)[0]-(b)[0]; \
-			     (c)[1]=(a)[1]-(b)[1]; \
-(c)[2]=(a)[2]-(b)[2]
-//macro to swap two integers
-#define SWAP(x,y) (x)^=(y);(y)^=(x);(x)^=(y)
-//constants
-const float timeslice = 1.0f;
-const float gravity = -0.2f;
-#define PI 3.141592653589793
-#define ALPHA 1
+//Globals--
+Flt last_Position_S;
+static int savex = 0;
+static int savey = 0;
+struct timespec timeStart, timeCurrent;
+struct timespec timePause;
+double physicsCountdown=0.0;
+double timeSpan=0.0;
+static int xres=1250, yres=900;
 
 //X Windows variables
 Display *dpy;
 Window win;
 GLXContext glc;
 GC gc;
-
-//globals
-Flt last_Position_S;
-static int savex = 0;
-static int savey = 0;
-//
-//-----------------------------------------------------------------------------
-//Setup timers
-const double physicsRate = 1.0 / 60.0;
-const double oobillion = 1.0 / 1e9;
-struct timespec timeStart, timeCurrent;
-struct timespec timePause;
-double physicsCountdown=0.0;
-double timeSpan=0.0;
-//unsigned int upause=0;
-double timeDiff(struct timespec *start, struct timespec *end) {
-	return (double)(end->tv_sec - start->tv_sec ) +
-		(double)(end->tv_nsec - start->tv_nsec) * oobillion;
-}
-void timeCopy(struct timespec *dest, struct timespec *source) {
-	memcpy(dest, source, sizeof(struct timespec));
-}
-//-----------------------------------------------------------------------------
-
-int xres=1250, yres=900;
 
 //images/textures
 //-----------------------------------------------------------------------------
@@ -127,174 +88,6 @@ GLuint gameoverTex;
 GLuint player1Tex;
 GLuint zombieTex;
 GLuint blackiconTex;
-
-struct Player {
-	Vec dir;
-	Vec pos;
-	Vec vel;
-	Flt radius;
-	Vec origin;
-	int score;
-	int currentcombo;
-	int check;
-	int lives;
-	int invuln;
-	int bulletType;
-	float multi;
-	int is_firing;
-	float angle;
-	float color[3];
-	struct timespec multiTimer;
-	Player() {
-		VecZero(dir);
-		currentcombo = 0;
-		pos[0] = (Flt)(xres/2);
-		pos[1] = (Flt)(yres/2);
-		pos[2] = 0.0f;
-		origin[0] = (Flt)(xres/2);
-		origin[1] = (Flt)(yres/2);
-		origin[2] = 0.0f;
-		VecZero(vel);
-		angle = 0.0;
-		color[0] = 1.0;
-		color[1] = 1.0;
-		color[2] = 1.0;
-		multi = 1.0;
-		score = 0;
-		check = 0;
-		radius = 20;
-		invuln = 0;
-		lives = 3;
-		bulletType = 1;
-	}
-};
-
-struct Wave {
-	Ppmimage *background;
-	GLuint bgTexture;
-	struct Wave *next;
-	struct Wave *prev;
-	Wave() {
-		prev = NULL;
-		next = NULL;
-	}
-};
-
-struct Zone {
-	Ppmimage *zbackground;
-	GLuint zTexture;
-	struct Zone *next;
-	struct Zone *prev;
-	struct Wave *wave;
-	Zone() {
-		next = NULL;
-		prev = NULL;
-		wave =     NULL;
-		zbackground = NULL;
-	}
-};
-
-struct Bullet {
-	Vec pos;
-	Vec origin;
-	Vec vel;
-	int type;
-	float angle;
-	float color[3];
-	struct timespec time;
-	struct Bullet *prev;
-	struct Bullet *next;
-	Bullet() {
-		prev = NULL;
-		next = NULL;
-		angle = 0.0;
-		pos[0] = (Flt)(xres/2);
-		pos[1] = (Flt)(yres/2);
-		pos[2] = 0.0f;
-		VecZero(vel);
-		color[0] = 1.0;
-		color[1] = 1.0;
-		color[2] = 1.0;
-	}
-};
-
-struct Zombie {
-	Vec pos;
-	Vec vel;
-	int nverts;
-	int hitpoints;
-	Flt radius;
-	Vec vert[8];
-	float angle;
-	float rotate;
-	float color[3];
-	struct Zombie *prev;
-	struct Zombie *next;
-	Zombie() {
-		prev = NULL;
-		next = NULL;
-		hitpoints = 1;
-	}
-
-};
-
-struct Loot {
-	Vec pos;
-	Ppmimage *lootbg;
-	GLuint lootTex;
-	int type;
-	struct Loot *next;
-	struct Loot *prev;
-	struct timespec lootTimer;
-	Loot() {
-		prev = NULL;
-		next = NULL;
-		type = 0;
-		clock_gettime(CLOCK_REALTIME, &lootTimer);
-	}
-};
-	
-
-struct Game {
-	Player player1;
-	Zombie *ahead;//zombies
-	Bullet *bhead;
-	Bullet *chead;
-	Bullet *dhead;
-	Zone *zhead;//zone, not zombie
-	Loot *lhead;
-	int gameover;
-	int running;
-	int lootcnt;
-	int zcnt;
-	int wcnt;
-	int zombieSpawn;
-	int nzombies;
-	int nbullets;
-	int startScreen;
-	int current_selection;
-	int old_selection;
-	struct timespec bulletTimer;
-	struct timespec multiTimer;
-	Game() {
-		ahead = NULL;
-		bhead = NULL;
-		chead = NULL;
-		dhead = NULL;
-		lhead = NULL;
-		zhead = NULL;
-		zcnt = 0;
-		wcnt = 0;
-		lootcnt = 0;
-		nzombies = 0;
-		nbullets = 0;
-		startScreen = 1;
-		gameover = 0;
-		running = 1;
-		zombieSpawn = 5;
-	}
-};
-
 
 int keys[65536];
 
@@ -320,9 +113,6 @@ void render(Game *game);
 void bresenham_Ang(Game *g);
 void render_StartScreen(Game *game);
 void sscreen_background(GLuint tex, float r, float g, float b, float alph);
-void deleteZone(Game *g, Zone *node);
-void deleteWaves(Game *g, Wave *node);
-void deleteLoot(Game *g, Loot *loot);
 void renderscoreScreen(Game *g);
 void rendergameoverScreen(Game *g);
 void multitime(Game *g);
@@ -334,6 +124,11 @@ int fib(int n);
 void zMove(Game *g);
 void screen1(Game *game);
 void screen2(Game *game);
+void deleteWaves(Game *g, Wave *node);
+void deleteZone(Game *g, Zone *node);
+void deleteLoot(Game *g, Loot *loot);
+void deleteZombie(Game *g, Zombie *node);
+void deleteBullet(Game *g, Bullet *node);
 
 int main(void)
 {
@@ -342,7 +137,7 @@ int main(void)
 	init_opengl();
 	Game game;
 	game.current_selection = 1;
-	int donesscreen = 0;
+	//int donesscreen = 0;
 	//sscreen_background(&game);
 	//glClearColor(0.0, 0.0, 0.0, 1.0);
 	int done=0;
@@ -525,13 +320,18 @@ void init_opengl(void)
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
 
+	//to prevent deprecation errors
 	char tempname[] = "./images/ssbg.ppm";
+	char tempname1[] = "./images/mygameover.ppm";
+	char tempname2[] = "./images/soldier.ppm";
+	char tempname3[] = "./images/zombie.ppm";
+	char tempname4[] = "./images/blackico.ppm";
 	//Load image files
 	background0 = ppm6GetImage(tempname);
-	gameover0   = ppm6GetImage("./images/mygameover.ppm");
-	player1     = ppm6GetImage("./images/soldier.ppm");
-	zombie0     = ppm6GetImage("./images/zombie.ppm");
-	blackicon   = ppm6GetImage("./images/blackico.ppm");
+	gameover0   = ppm6GetImage(tempname1);
+	player1     = ppm6GetImage(tempname2);
+	zombie0     = ppm6GetImage(tempname3);
+	blackicon   = ppm6GetImage(tempname4);
 	//Generate Textures
 	glGenTextures(1, &bgTexture0);
 	init_textures(background0, bgTexture0);
@@ -587,7 +387,8 @@ void init(Game *g) {
 		g->zhead = z;
 		g->zcnt++;
 		g->wcnt = 1;
-		g->zhead->zbackground = ppm6GetImage("./images/tex3check.ppm");
+		char texname[] = "./images/tex3check.ppm";
+		g->zhead->zbackground = ppm6GetImage(texname);
 		glClearColor(1.0, 0.0, 0.0, 1.0);
 		//Do this to allow fonts
 		glEnable(GL_TEXTURE_2D);
@@ -607,7 +408,8 @@ void init(Game *g) {
 		g->zhead = z;
 		g->zcnt = 1;
 		g->wcnt = 1;
-		g->zhead->zbackground = ppm6GetImage("./images/tex2.ppm");
+		char texname[] = "./images/tex2.ppm";
+		g->zhead->zbackground = ppm6GetImage(texname);
 		glClearColor(1.0, 0.0, 0.0, 1.0);
 		//Do this to allow fonts
 		glEnable(GL_TEXTURE_2D);
@@ -675,7 +477,7 @@ void spawnZombies(Game *g)
 		}
 		//bottom
 		if((j%5)==2){
-			a->pos[0] = (Flt)(xres*0.25);
+			a->pos[0] = (Flt)(xres*0.25);//(xres*rnd())
 			a->pos[1] = (Flt)(0);
 			a->pos[2] = 0.0f;
 			a->color[0] = 0.5;
@@ -687,7 +489,7 @@ void spawnZombies(Game *g)
 		//right middle
 		if((j%5)==3){
 			a->pos[0] = (Flt)(xres);
-			a->pos[1] = (Flt)(yres*0.5);
+			a->pos[1] = (Flt)(yres*0.51);
 			a->pos[2] = 0.0f;
 			a->color[0] = 0.5;
 			a->color[1] = 2.5;
@@ -731,12 +533,12 @@ void zMove(Game *g, Zombie *a)
 	d1 = g->player1.pos[1] - a->pos[1];
 	dist = sqrt(d0*d0 + d1*d1);
 	if (dist < 700) {
-		a->vel[0] = d0/dist * 2.0;
-		a->vel[1] = d1/dist * 2.0;
+		a->vel[0] = d0/dist * a->speed;
+		a->vel[1] = d1/dist * a->speed;
 	}
 	if (g->player1.origin[0] != g->player1.pos[0] || g->player1.origin[1] != g->player1.pos[1]) {
-		a->vel[0] = d0/dist * 2.0;
-		a->vel[1] = d1/dist * 2.0;
+		a->vel[0] = d0/dist * a->speed;
+		a->vel[1] = d1/dist * a->speed;
 	}
 	//rotate zombie to chase player
 	x0 = g->player1.pos[0], y0 = g->player1.pos[1];
@@ -764,6 +566,7 @@ void zMove(Game *g, Zombie *a)
 		angle = 90 - angle;
 		a->angle = angle;
 	}
+	//std::cout<<a->angle << "\n";
 }
 //====================================
 void normalize(Vec v) 
@@ -938,168 +741,6 @@ int check_keys(XEvent *e)
 	return 0;
 }
 
-void deleteLoot(Game *g, Loot *loot)
-{
-    if (loot){
-	//remove a node from linked list
-	if (loot->prev == NULL) {
-	    if (loot->next == NULL) {
-		g->lhead = NULL;
-	    } else {
-		loot->next->prev = NULL;
-		g->lhead = loot->next;
-	    }
-	} else {
-	    if (loot->next == NULL) {
-		loot->prev->next = NULL;
-	    } else {
-		loot->prev->next = loot->next;
-		loot->next->prev = loot->prev;
-	    }
-	}
-	delete loot;
-	loot = NULL;
-	g->lootcnt--;
-    }
-}
-
-void deleteBullet(Game *g, Bullet *node)
-{
-	//remove a node from linked list
-	if (node->type == 1) {
-		if (node->prev == NULL) {
-			if (node->next == NULL) {
-				g->bhead = NULL;
-			} else {
-				node->next->prev = NULL;
-				g->bhead = node->next;
-			}
-		} else {
-			if (node->next == NULL) {
-				node->prev->next = NULL;
-			} else {
-				node->prev->next = node->next;
-				node->next->prev = node->prev;
-			}
-		}
-		delete node;
-		node = NULL;
-	} else if (node->type == 2) {
-		if (node->prev == NULL) {
-			if (node->next == NULL) {
-				g->chead = NULL;
-			} else {
-				node->next->prev = NULL;
-				g->chead = node->next;
-			}
-		} else {
-			if (node->next == NULL) {
-				node->prev->next = NULL;
-			} else {
-				node->prev->next = node->next;
-				node->next->prev = node->prev;
-			}
-		}
-		delete node;
-		node = NULL;
-	} else if (node->type == 3) {
-		if (node->prev == NULL) {
-			if (node->next == NULL) {
-				g->dhead = NULL;
-			} else {
-				node->next->prev = NULL;
-				g->dhead = node->next;
-			}
-		} else {
-			if (node->next == NULL) {
-				node->prev->next = NULL;
-			} else {
-				node->prev->next = node->next;
-				node->next->prev = node->prev;
-			}
-		}
-		delete node;
-		node = NULL;
-	}
-}
-
-void deleteZombie(Game *g, Zombie *node)
-{
-	//remove a node from linked list
-	if (g){}
-	if (node){
-		//remove a node from linked list
-		if (node->prev == NULL) {
-			if (node->next == NULL) {
-				g->ahead = NULL;
-			} else {
-				node->next->prev = NULL;
-				g->ahead = node->next;
-			}
-		} else {
-			if (node->next == NULL) {
-				node->prev->next = NULL;
-			} else {
-				node->prev->next = node->next;
-				node->next->prev = node->prev;
-			}
-		}
-		delete node;
-		node = NULL;
-	}
-}
-
-void deleteZone(Game *g, Zone *node)
-{
-	//remove a node from linked list
-	deleteWaves(g, node->wave);
-	if (node){
-		//remove a node from linked list
-		if (node->prev == NULL) {
-			if (node->next == NULL) {
-				g->zhead = NULL;
-			} else {
-				node->next->prev = NULL;
-				g->zhead = node->next;
-			}
-		} else {
-			if (node->next == NULL) {
-				node->prev->next = NULL;
-			} else {
-				node->prev->next = node->next;
-				node->next->prev = node->prev;
-			}
-		}
-		delete node;
-		node = NULL;
-	}
-}
-
-void deleteWaves(Game *g, Wave *node)
-{
-	//remove a node from linked list
-	if (g){}
-	if (node){
-		//remove a node from linked list
-		if (node->prev == NULL) {
-			if (node->next == NULL) {
-				g->zhead->wave = NULL;
-			} else {
-				node->next->prev = NULL;
-				g->zhead->wave = node->next;
-			}
-		} else {
-			if (node->next == NULL) {
-				node->prev->next = NULL;
-			} else {
-				node->prev->next = node->next;
-				node->next->prev = node->prev;
-			}
-		}
-		delete node;
-		node = NULL;
-	}
-}
 
 void buildZombieFragment(Zombie *ta, Zombie *a)
 {
@@ -1139,6 +780,14 @@ void buildZombieFragment(Zombie *ta, Zombie *a)
 =============================================*/
 void lootDrop(Game *g, Zombie *a)
 {
+	//to prevent deprecation errors
+	char texname[] = "./images/doubleshot.ppm";
+	char texname1[] = "./images/tripleshot.ppm";
+	char texname2[] = "./images/nuke.ppm";
+	char texname3[] = "./images/lifeup.ppm";
+	char texname4[] = "./images/doubleshot.ppm";
+	char texname5[] = "./images/doubleshot.ppm";
+	//Load image files
 	// Create a random number from 1-100
 	int r1 = rand() % 100 + 1;
 	std::cout<<r1<<"\n";
@@ -1167,7 +816,7 @@ void lootDrop(Game *g, Zombie *a)
 			//rapid fire!
 			g->lhead->type = 1;
 			std::cout << "RAPID FIRE DROP\n";
-			g->lhead->lootbg = ppm6GetImage("./images/doubleshot.ppm");
+			g->lhead->lootbg = ppm6GetImage(texname4);
 			glGenTextures(1, &g->lhead->lootTex);
 			init_textures(g->lhead->lootbg, g->lhead->lootTex);
 		} else if (r2 >=41 && r2 <= 65) {
@@ -1181,7 +830,7 @@ void lootDrop(Game *g, Zombie *a)
 				g->lhead->type = 2;
 				std::cout << "DOUBLE SHOT DROP\n";
 				//draw object, texture, and create collision if player touches
-				g->lhead->lootbg = ppm6GetImage("./images/doubleshot.ppm");
+				g->lhead->lootbg = ppm6GetImage(texname);
 				glGenTextures(1, &g->lhead->lootTex);
 				init_textures(g->lhead->lootbg, g->lhead->lootTex);
 			}
@@ -1195,7 +844,7 @@ void lootDrop(Game *g, Zombie *a)
 				//triple shot!
 				g->lhead->type = 3;
 				std::cout << "TRIPLE SHOT DROP\n";
-				g->lhead->lootbg = ppm6GetImage("./images/tripleshot.ppm");
+				g->lhead->lootbg = ppm6GetImage(texname1);
 				glGenTextures(1, &g->lhead->lootTex);
 				init_textures(g->lhead->lootbg, g->lhead->lootTex);
 			}
@@ -1203,21 +852,21 @@ void lootDrop(Game *g, Zombie *a)
 			//temp invuln!
 			g->lhead->type = 4;
 			std::cout << "INVULNERABILITY DROP\n";
-			g->lhead->lootbg = ppm6GetImage("./images/doubleshot.ppm");
+			g->lhead->lootbg = ppm6GetImage(texname5);
 			glGenTextures(1, &g->lhead->lootTex);
 			init_textures(g->lhead->lootbg, g->lhead->lootTex);
 		} else if (r2 >=88 && r2 <= 95) {
 			//free wave clear!
 			g->lhead->type = 5;
 			std::cout << "WAVE CLEAR DROP\n";
-			g->lhead->lootbg = ppm6GetImage("./images/nuke.ppm");
+			g->lhead->lootbg = ppm6GetImage(texname2);
 			glGenTextures(1, &g->lhead->lootTex);
 			init_textures(g->lhead->lootbg, g->lhead->lootTex);
 		} else {
 			//1up!!!
 			g->lhead->type = 6;
 			std::cout << "LIFE UP DROP\n";
-			g->lhead->lootbg = ppm6GetImage("./images/lifeup.ppm");
+			g->lhead->lootbg = ppm6GetImage(texname3);
 			glGenTextures(1, &g->lhead->lootTex);
 			init_textures(g->lhead->lootbg, g->lhead->lootTex);
 		}
@@ -1395,9 +1044,11 @@ void player_zomb_collision(Game *g)
 				if (!g->player1.invuln) {
 					g->player1.lives--;
 					std::cout<<"lives remaining: " << g->player1.lives << "\n";
-					z->color[0] = 0.0;
-					z->color[1] = 1.0;
+					//ENRAGE THE ZOMBIE; HE'S HUNGRY FOR BLOOOOOOOOOD
+					z->color[0] = 1.0;
+					z->color[1] = 0.0;
 					z->color[2] = 0.1;
+					z->speed += 1.0;
 					g->player1.multi = 1.0;
 					//if (g->player1.lives == 1) print warning
 					if (g->player1.lives < 1) {
@@ -1448,10 +1099,10 @@ void player_zomb_collision(Game *g)
 							}
 							a->angle += a->rotate;
 							a = a->next;
+							g->player1.pos[0] = xres/2;
+							g->player1.pos[1] = yres/2;
 						}
 					}
-					g->player1.pos[0] = xres/2;
-					g->player1.pos[1] = yres/2;
 				}
 
 				//empower zombie? xD...
@@ -2035,17 +1686,9 @@ void render(Game *g)
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_ALPHA_TEST);
 	//glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
-	glBegin(GL_TRIANGLES);
 	//glVertex2f(-10.0f, -10.0f);
 	//glVertex2f(  0.0f, 20.0f);
 	//glVertex2f( 10.0f, -10.0f);
-	glVertex2f(-12.0f, -10.0f);
-	glVertex2f(  0.0f, 20.0f);
-	glVertex2f(  0.0f, -6.0f);
-	glVertex2f(  0.0f, -6.0f);
-	glVertex2f(  0.0f, 20.0f);
-	glVertex2f( 12.0f, -10.0f);
-	glEnd();
 	glColor3f(1.0f, 0.0f, 0.0f);
 	glBegin(GL_POINTS);
 	glVertex2f(0.0f, 0.0f);
@@ -2098,6 +1741,7 @@ void render(Game *g)
 	//Draw the zombies
 	{
 		Zombie *a = g->ahead;
+		int count = 1;
 		while (a) {
 			//Log("draw asteroid...\n");
 			glColor3fv(a->color);
@@ -2119,29 +1763,23 @@ void render(Game *g)
 			glBindTexture(GL_TEXTURE_2D, 0);
 			glDisable(GL_ALPHA_TEST);
 			//glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
-			glBegin(GL_QUADS);
-			glVertex2i(-20,-20);
-			glVertex2i(-20, 20);
-			glVertex2i( 20, 20);
-			glVertex2i( 20,-20);
-			
 			//Log("%i verts\n",a->nverts);
 			//for (int j=0; j<a->nverts; j++) {
 			//	glVertex2f(a->vert[j][0], a->vert[j][1]);
 			//}
 	
-			glEnd();
 			//glBegin(GL_LINES);
 			//	glVertex2f(0,   0);
 			//	glVertex2f(a->radius, 0);
 			//glEnd();
-			glPopMatrix();
 			glColor3f(1.0f, 0.0f, 0.0f);
 //			glBegin(GL_POINTS);
 //			glVertex2f(a->pos[0], a->pos[1]);
 			glBegin(GL_POINTS);
 			glVertex2f(a->pos[0], a->pos[1]);
 			glEnd();
+			//std::cout<<"asteroid angle: " << a->angle << "\n";
+			count++;
 			a = a->next;
 		}
 	}
@@ -2162,7 +1800,6 @@ void render(Game *g)
 		}
 	//Draw Loot
 	//sscreen_background(g->zhead->zTexture, 1.0, 1.0, 1.0, 1.0);
-	
 }
 
 void lootDraw(GLuint tex, Loot *l, float r, float g, float b, float alph)

@@ -34,18 +34,11 @@ typedef float Vec[3];
 
 
 //Globals--
-Flt last_Position_S;
-static int savex = 0;
-static int savey = 0;
 
-//-----------------------------------------------------------------------------
+//---------------------------------------------------------------------------n
 //Setup timers
 const double physicsRate = 1.0 / 60.0;
 const double oobillion = 1.0 / 1e9;
-struct timespec timeStart, timeCurrent;
-struct timespec timePause;
-double physicsCountdown=0.0;
-double timeSpan=0.0;
 //unsigned int upause=0;
 double timeDiff(struct timespec *start, struct timespec *end) {
         return (double)(end->tv_sec - start->tv_sec ) +
@@ -55,10 +48,6 @@ void timeCopy(struct timespec *dest, struct timespec *source) {
         memcpy(dest, source, sizeof(struct timespec));
 }
 //-----------------------------------------------------------------------------
-
-int xres=1250, yres=900;
-
-
 
 struct Player{
         Vec dir;
@@ -77,6 +66,28 @@ struct Player{
         float angle;
         float color[3];
         struct timespec multiTimer;
+	Player() {
+                VecZero(dir);
+                currentcombo = 0;
+                pos[0] = (Flt)(1250/2);
+                pos[1] = (Flt)(900/2);
+                pos[2] = 0.0f;
+                origin[0] = (Flt)(1250/2);
+                origin[1] = (Flt)(900/2);
+                origin[2] = 0.0f;
+                VecZero(vel);
+                angle = 0.0;
+                color[0] = 1.0;
+                color[1] = 1.0;
+                color[2] = 1.0;
+                multi = 1.0;
+                score = 0;
+                check = 0;
+                radius = 20;
+                invuln = 0;
+                lives = 3;
+                bulletType = 1;
+        }
 };
 
 struct Wave {
@@ -84,6 +95,10 @@ struct Wave {
         GLuint bgTexture;
         struct Wave *next;
         struct Wave *prev;
+	Wave() {
+                prev = NULL;
+                next = NULL;
+        }
 };
 
 struct Zone {
@@ -92,6 +107,12 @@ struct Zone {
         struct Zone *next;
         struct Zone *prev;
         struct Wave *wave;
+	Zone() {
+                next = NULL;
+                prev = NULL;
+                wave =     NULL;
+                zbackground = NULL;
+        }
 };
 
 struct Bullet {
@@ -104,6 +125,18 @@ struct Bullet {
         struct timespec time;
         struct Bullet *prev;
         struct Bullet *next;
+	Bullet() {
+                prev = NULL;
+                next = NULL;
+                angle = 0.0;
+                pos[0] = (Flt)(1250/2);
+                pos[1] = (Flt)(900/2);
+                pos[2] = 0.0f;
+                VecZero(vel);
+                color[0] = 1.0;
+                color[1] = 1.0;
+                color[2] = 1.0;
+        }
 };
 
 struct Zombie {
@@ -113,11 +146,20 @@ struct Zombie {
         int hitpoints;
         Flt radius;
         Vec vert[8];
+	float speed;
         float angle;
         float rotate;
         float color[3];
         struct Zombie *prev;
         struct Zombie *next;
+	Zombie() {
+                speed = 2.0;
+		prev = NULL;
+                next = NULL;
+                hitpoints = 1;
+		angle = 0.0;
+		rotate = 0.0;
+        }
 };
 
 struct Loot {
@@ -128,6 +170,12 @@ struct Loot {
         struct Loot *next;
         struct Loot *prev;
         struct timespec lootTimer;
+	Loot() {
+                prev = NULL;
+                next = NULL;
+                type = 0;
+                clock_gettime(CLOCK_REALTIME, &lootTimer);
+        }
 };
 
 
@@ -153,6 +201,23 @@ struct Game {
         int old_selection;
         struct timespec bulletTimer;
         struct timespec multiTimer;
+	Game() {
+                ahead = NULL;
+                bhead = NULL;
+                chead = NULL;
+                dhead = NULL;
+                lhead = NULL;
+                zhead = NULL;
+                zcnt = 0;
+                wcnt = 0;
+                lootcnt = 0;
+                nzombies = 0;
+                nbullets = 0;
+                startScreen = 1;
+                gameover = 0;
+                running = 1;
+                zombieSpawn = 5;
+        }
 };
 
 #endif
