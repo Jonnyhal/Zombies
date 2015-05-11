@@ -93,6 +93,8 @@ GLuint gameoverTex;
 GLuint player1Tex;
 GLuint zombieTex;
 GLuint blackiconTex;
+GLuint silhouetteTexture;
+GLuint silhouette_player_Texture;
 
 int keys[65536];
 
@@ -297,6 +299,45 @@ void reshape_window(int width, int height)
 	set_title();
 }
 
+unsigned char *buildAlphaData(Ppmimage *img)
+{
+    //add 4th component to RGB stream...
+    int a,b,c;
+    unsigned char *newdata, *ptr;
+    unsigned char *data = (unsigned char *)img->data;
+    //newdata = (unsigned char *)malloc(img->width * img->height * 4);
+    newdata = new unsigned char[img->width * img->height * 4];
+    ptr = newdata;
+    for (int i=0; i<img->width * img->height * 3; i+=3) {
+        a = *(data+0);
+        b = *(data+1);
+        c = *(data+2);
+        *(ptr+0) = a;
+        *(ptr+1) = b;
+        *(ptr+2) = c;
+        //
+        //get the alpha value
+        //
+        //original code
+        //get largest color component...
+        //*(ptr+3) = (unsigned char)((
+        //      (int)*(ptr+0) +
+        //      (int)*(ptr+1) +
+        //      (int)*(ptr+2)) / 3);
+        //d = a;
+        //if (b >= a && b >= c) d = b;
+        //if (c >= a && c >= b) d = c;
+        //*(ptr+3) = d;
+        //
+        //new code, suggested by Chris Smith, Fall 2013
+        *(ptr+3) = (a|b|c);
+        //
+        ptr += 4;
+        data += 3;
+    }
+    return newdata;
+}
+
 void init_opengl(void)
 {
 	//OpenGL initialization
@@ -335,13 +376,39 @@ void init_opengl(void)
 	init_textures(background0, bgTexture0);
 	glGenTextures(1, &gameoverTex);
 	init_textures(gameover0, gameoverTex);
+	//PlayerTexture
+	int w1 = player1->width;
+	int h1 = player1->height;
 	glGenTextures(1, &player1Tex);
 	init_textures(player1, player1Tex);
+	glGenTextures(1, &silhouette_player_Texture);
+	init_textures(blackicon, blackiconTex);
+	//playerSilhouette
+	glBindTexture(GL_TEXTURE_2D, silhouette_player_Texture);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	unsigned char *silhouettePlayerData = buildAlphaData(player1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w1, h1, 0, 
+				GL_RGBA, GL_UNSIGNED_BYTE, silhouettePlayerData);
+	delete [] silhouettePlayerData;
+	
+	//zombieTexture
+	int w = zombie0->width;
+	int h = zombie0->height;
 	glGenTextures(1, &zombieTex);
 	init_textures(zombie0, zombieTex);
 	glGenTextures(1, &blackiconTex);
 	init_textures(blackicon, blackiconTex);
-
+	glGenTextures(1, &silhouetteTexture);
+	init_textures(blackicon, blackiconTex);
+	//silhoutte
+	glBindTexture(GL_TEXTURE_2D, silhouetteTexture);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	unsigned char *silhouetteData = buildAlphaData(zombie0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, 
+				GL_RGBA, GL_UNSIGNED_BYTE, silhouetteData);
+	delete [] silhouetteData;
 }
 
 void init_textures(Ppmimage *image, GLuint tex)
@@ -368,6 +435,7 @@ void check_resize(XEvent *e)
 		reshape_window(xce.width, xce.height);
 	}
 }
+
 
 void init(Game *g) {
 	// before calling, show intro text
@@ -1184,10 +1252,11 @@ void render(Game *g)
 	glTranslatef(g->player1.pos[0], g->player1.pos[1], g->player1.pos[2]);
 	//float angle = atan2(player1.dir[1], player1.dir[0]);
 	//std::cout<<"angle = " << g->player1.angle << std::endl;
-	glBindTexture(GL_TEXTURE_2D, player1Tex);
+	glBindTexture(GL_TEXTURE_2D, silhouette_player_Texture);
 	glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.0f);
+//	glColor4ub(255,255,255,255);
 	glBegin(GL_QUADS);
 		//float w = g->player1.width;
 		float w = 25.0f;
@@ -1261,7 +1330,7 @@ void render(Game *g)
 			glColor3fv(a->color);
 			glPushMatrix();
 			glTranslatef(a->pos[0], a->pos[1], a->pos[2]);
-			glBindTexture(GL_TEXTURE_2D, zombieTex);
+			glBindTexture(GL_TEXTURE_2D, silhouetteTexture);
 			glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
 			glEnable(GL_ALPHA_TEST);
 			glAlphaFunc(GL_GREATER, 0.0f);

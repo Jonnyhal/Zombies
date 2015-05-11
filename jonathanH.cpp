@@ -5,12 +5,12 @@
 #include <cmath>
 #include <cstdlib>
 
+extern "C"{
+	#include "struct.h"
+	#include "defs.h"
+}
 
-extern void zMove(Game *game, Zombie *a);
-extern void buildZombieFragment(Zombie *ta, Zombie *a);
-extern void zomb_zomb_collision(Zombie *a);
-
-void SpawnZombies(Game *g) 
+extern void SpawnZombies(Game *g) 
 {
 	std::cout<<"\nwcnt in spawnZombies: " << g->wcnt << "\n";
 	std::cout<<"zcnt in spawnZombies: " << g->zcnt << "\n";
@@ -102,7 +102,7 @@ void SpawnZombies(Game *g)
 
 }
 //======Zombie movement function=======
-void zMove(Game *g, Zombie *a)
+extern void zMove(Game *g, Zombie *a)
 {
 	Flt d0, d1, dist;
 	float x0, y0, x1, y1;
@@ -146,7 +146,7 @@ void zMove(Game *g, Zombie *a)
 	}
 }
 
-void buildZombieFragment(Zombie *ta, Zombie *a)
+extern void buildZombieFragment(Zombie *ta, Zombie *a)
 {
 	//build ta from a
 	ta->nverts = 8;
@@ -171,7 +171,7 @@ void buildZombieFragment(Zombie *ta, Zombie *a)
 	ta->vel[1] = a->vel[1] + (rnd()*2.0-1.0);
 	//std::cout << "frag" << std::endl;
 }
-void zomb_zomb_collision(Zombie *a)
+extern void zomb_zomb_collision(Zombie *a)
 {
 	Zombie *b = a->prev;
 	Flt z0, z1, zdist;
