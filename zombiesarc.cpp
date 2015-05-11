@@ -382,7 +382,7 @@ void init_opengl(void)
 	glGenTextures(1, &player1Tex);
 	init_textures(player1, player1Tex);
 	glGenTextures(1, &silhouette_player_Texture);
-	init_textures(blackicon, blackiconTex);
+//	init_textures(blackicon, blackiconTex);
 	//playerSilhouette
 	glBindTexture(GL_TEXTURE_2D, silhouette_player_Texture);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
@@ -1256,7 +1256,7 @@ void render(Game *g)
 	glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.0f);
-//	glColor4ub(255,255,255,255);
+	glColor4ub(255,255,255,255);
 	glBegin(GL_QUADS);
 		//float w = g->player1.width;
 		float w = 25.0f;
