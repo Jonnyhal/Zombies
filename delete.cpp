@@ -1,14 +1,8 @@
 #include <stdlib.h>
 
-extern "C++"{
+extern "C"{
 	#include "struct.h"
 }
-
-extern void deleteWaves(Game *g, Wave *node);
-extern void deleteZone(Game *g, Zone *node);
-extern void deleteLoot(Game *g, Loot *loot);
-extern void deleteZombie(Game *g, Zombie *node);
-extern void deleteBullet(Game *g, Bullet *node);
 
 extern void deleteLoot(Game *g, Loot *loot)
 {
@@ -121,18 +115,18 @@ extern void deleteZombie(Game *g, Zombie *node)
         }
 }
 
-extern void deleteZone(Game *g, Zone *node)
+extern void deleteWaves(Game *g, Wave *node)
 {
         //remove a node from linked list
-        deleteWaves(g, node->wave);
+        if (g){}
         if (node){
                 //remove a node from linked list
                 if (node->prev == NULL) {
                         if (node->next == NULL) {
-                                g->zhead = NULL;
+                                g->zhead->wave = NULL;
                         } else {
                                 node->next->prev = NULL;
-                                g->zhead = node->next;
+                                g->zhead->wave = node->next;
                         }
                 } else {
                         if (node->next == NULL) {
@@ -147,18 +141,18 @@ extern void deleteZone(Game *g, Zone *node)
         }
 }
 
-extern void deleteWaves(Game *g, Wave *node)
+extern void deleteZone(Game *g, Zone *node)
 {
         //remove a node from linked list
-        if (g){}
+        deleteWaves(g, node->wave);
         if (node){
                 //remove a node from linked list
                 if (node->prev == NULL) {
                         if (node->next == NULL) {
-                                g->zhead->wave = NULL;
+                                g->zhead = NULL;
                         } else {
                                 node->next->prev = NULL;
-                                g->zhead->wave = node->next;
+                                g->zhead = node->next;
                         }
                 } else {
                         if (node->next == NULL) {
