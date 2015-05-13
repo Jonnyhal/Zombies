@@ -62,7 +62,10 @@ extern "C" {
 #include "delete.h"
 #include "loot.h"
 #include "bullets.h"
+<<<<<<< HEAD
 #include "render.h"
+=======
+>>>>>>> 483e030ee4a8311d08ffb30168ce823966077952
 
 //Globals--
 Flt last_Position_S;
@@ -111,7 +114,11 @@ void init(Game *g);
 void spawnZombies(Game *g);
 void init_sounds(void);
 void physics(Game *game);
+<<<<<<< HEAD
 //void render(Game *game);
+=======
+void render(Game *game);
+>>>>>>> 483e030ee4a8311d08ffb30168ce823966077952
 void player_Ang(Game *g);
 void render_StartScreen(Game *game);
 void sscreen_background(GLuint tex, float r, float g, float b, float alph);
@@ -341,9 +348,12 @@ unsigned char *buildAlphaData(Ppmimage *img)
 
 void init_opengl(void)
 {
+<<<<<<< HEAD
 //	GLuint silhouetteTexture;
 //	GLuint silhouette_player_Texture;
 
+=======
+>>>>>>> 483e030ee4a8311d08ffb30168ce823966077952
 	//OpenGL initialization
 	glViewport(0, 0, xres, yres);
 	//Initialize matrices
@@ -1193,7 +1203,11 @@ void renderscoreScreen(Game *g)
 	ggprint16(&r, 32, 0x00ff00ff, "Try Again");
 	ggprint16(&r, 32, 0x00ff00ff, "Exit");
 }
+<<<<<<< HEAD
 /*
+=======
+
+>>>>>>> 483e030ee4a8311d08ffb30168ce823966077952
 void render(Game *g)
 {
 	//std::cout<<"multi: " << g->player1.multi << "\n";
@@ -1301,8 +1315,14 @@ void render(Game *g)
 		glEnd();
 		glPopMatrix();
 		//std::cout<< "blinking!" << "\n";
+<<<<<<< HEAD
 ///////	}
 	if (keys[XK_Up]) {
+=======
+	}
+
+	/*if (keys[XK_Up]) {
+>>>>>>> 483e030ee4a8311d08ffb30168ce823966077952
 		int i;
 		//draw thrust
 		Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
@@ -1322,7 +1342,11 @@ void render(Game *g)
 			glVertex2f(g->player1.pos[0]+xe,g->player1.pos[1]+ye);
 		}
 		glEnd();
+<<<<<<< HEAD
 ///////	} 
+=======
+	}*/
+>>>>>>> 483e030ee4a8311d08ffb30168ce823966077952
 	//-------------------------------------------------------------------------
 	//Draw the zombies
 	{
@@ -1387,7 +1411,11 @@ void render(Game *g)
 	//Draw Loot
 	//sscreen_background(g->zhead->zTexture, 1.0, 1.0, 1.0, 1.0);
 }
+<<<<<<< HEAD
 */
+=======
+
+>>>>>>> 483e030ee4a8311d08ffb30168ce823966077952
 void sscreen_background(GLuint tex, float r, float g, float b, float alph)
 {
 	
