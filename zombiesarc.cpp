@@ -507,7 +507,7 @@ void spawnZombies(Game *g)
 	for (int j=0; j<g->zombieSpawn; j++) {
 		Zombie *a = new Zombie;
 		a->nverts = 4;
-		a->radius = 20.0;
+		a->radius = 40.0;
 		Flt r2 = a->radius / 2.0;
 		Flt angle = 0.0f;
 		Flt inc = (PI * 2.0) / (Flt)a->nverts;
@@ -520,7 +520,7 @@ void spawnZombies(Game *g)
 		a->hitpoints = g->zcnt - 1;
 		//std::cout << "asteroid" << std::endl;
 		//left part of screen 3/4 down from top
-		if((j%5)==0){
+		if((j%9)==0){
 			a->pos[0] = (Flt)(0);
 			a->pos[1] = (Flt)(yres*0.65);
 			a->pos[2] = 0.0f;
@@ -531,7 +531,7 @@ void spawnZombies(Game *g)
 			a->vel[1] = (Flt)(0);
 		}
 		//left part of screen 1/4 down from the top
-		if((j%5)==1){
+		if((j%9)==1){
 			a->pos[0] = (Flt)(0);
 			a->pos[1] = (Flt)(yres*0.25);
 			a->pos[2] = 0.0f;
@@ -542,7 +542,7 @@ void spawnZombies(Game *g)
 			a->vel[1] = (Flt)(0);
 		}
 		//bottom
-		if((j%5)==2){
+		if((j%9)==2){
 			a->pos[0] = (Flt)(xres*0.25);//(xres*rnd())
 			a->pos[1] = (Flt)(0);
 			a->pos[2] = 0.0f;
@@ -553,7 +553,7 @@ void spawnZombies(Game *g)
 			a->vel[1] = 10;
 		}
 		//right middle
-		if((j%5)==3){
+		if((j%9)==3){
 			a->pos[0] = (Flt)(xres);
 			a->pos[1] = (Flt)(yres*0.51);
 			a->pos[2] = 0.0f;
@@ -565,7 +565,7 @@ void spawnZombies(Game *g)
 			//flips out occasionally, angle is always wrong at spawn~bware
 		}
 		//top
-		if((j%5)==4){
+		if((j%9)==4){
 			a->pos[0] = (Flt)(xres*0.65);
 			a->pos[1] = (Flt)(yres);
 			a->pos[2] = 0.0f;
@@ -575,7 +575,45 @@ void spawnZombies(Game *g)
 			a->vel[0] = (Flt)(0);
 			a->vel[1] = (Flt)((-2.0));
 			//angle occasionally wrong at spawn
-		}	
+		}
+		if((j%9)==5){
+			a->pos[0] = (Flt)(xres*0.25);
+			a->pos[1] = (Flt)(yres);
+			a->pos[2] = 0.0f;
+			a->color[0] = 0.5;
+			a->color[1] = 2.5;
+			a->color[2] = 1.0;
+		}
+		if((j%9)==6){
+			a->pos[0] = (Flt)(xres);
+			a->pos[1] = (Flt)(yres);
+			a->pos[2] = 0.0f;
+			a->color[0] = 0.5;
+			a->color[1] = 2.5;
+			a->color[2] = 1.0;
+			a->vel[0] = (Flt)(0);
+			a->vel[1] = (Flt)((-2.0));
+		}
+		if((j%9)==7){
+			a->pos[0] = (Flt)(xres*0.65);
+			a->pos[1] = (Flt)(0);
+			a->pos[2] = 0.0f;
+			a->color[0] = 0.5;
+			a->color[1] = 2.5;
+			a->color[2] = 1.0;
+			a->vel[0] = (Flt)(0);
+			a->vel[1] = (Flt)((-2.0));
+		}
+		if((j%9)==8){
+			a->pos[0] = (Flt)(xres);
+			a->pos[1] = (Flt)(0);
+			a->pos[2] = 0.0f;
+			a->color[0] = 0.5;
+			a->color[1] = 2.5;
+			a->color[2] = 1.0;
+			a->vel[0] = (Flt)(0);
+			a->vel[1] = (Flt)((-2.0));
+		}
 		//add to front of linked list
 		a->next = g->ahead;
 		if (g->ahead != NULL)
@@ -812,10 +850,11 @@ void zomb_zomb_collision(Zombie *a)
 		z0 = a->pos[0] - b->pos[0];
 		z1 = a->pos[1] - b->pos[1];
 		zdist = sqrt(z0*z0 + z1*z1);
-		if(zdist < 1.5 * a->radius) {
-			b->pos[0] = a->pos[0] + (z0/zdist) * a->radius * 1.01;
-			b->pos[1] = a->pos[1] + (z1/zdist) * a->radius * 1.01;
-		
+		if(zdist <= a->radius) {
+			//a->pos[0] = b->pos[0] + (z0/zdist) * a->radius * 1.1;
+			//a->pos[1] = b->pos[1] + (z1/zdist) * a->radius * 1.1;
+			a->vel[0] += z0/zdist * 5.0;
+			a->vel[1] += z1/zdist * 5.0;
 		}
 		
 	}
@@ -954,7 +993,7 @@ void physics(Game *g)
 		//Try nesting everything in an if/else with a randomized bool
 		//to determine if zombie is wandering or running at player?
 		zMove(g, a);
-		//zomb_zomb_collision(a);
+		zomb_zomb_collision(a);
 		a->pos[0] += a->vel[0];
 		a->pos[1] += a->vel[1];
 		//Check for collision with window edges

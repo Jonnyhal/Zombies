@@ -32,7 +32,7 @@ extern void SpawnZombies(Game *g)
 		a->hitpoints = g->zcnt - 1;
 		//std::cout << "asteroid" << std::endl;
 		//left part of screen 3/4 down from top
-		if((j%5)==0){
+		if((j%9)==0){
 			a->pos[0] = (Flt)(0);
 			a->pos[1] = (Flt)(yres*0.65);
 			a->pos[2] = 0.0f;
@@ -43,7 +43,7 @@ extern void SpawnZombies(Game *g)
 			a->vel[1] = (Flt)(0);
 		}
 		//left part of screen 1/4 down from the top
-		if((j%5)==1){
+		if((j%9)==1){
 			a->pos[0] = (Flt)(0);
 			a->pos[1] = (Flt)(yres*0.25);
 			a->pos[2] = 0.0f;
@@ -54,7 +54,7 @@ extern void SpawnZombies(Game *g)
 			a->vel[1] = (Flt)(0);
 		}
 		//bottom
-		if((j%5)==2){
+		if((j%9)==2){
 			a->pos[0] = (Flt)(xres*0.25);
 			a->pos[1] = (Flt)(0);
 			a->pos[2] = 0.0f;
@@ -65,7 +65,7 @@ extern void SpawnZombies(Game *g)
 			a->vel[1] = 10;
 		}
 		//right middle
-		if((j%5)==3){
+		if((j%9)==3){
 			a->pos[0] = (Flt)(xres);
 			a->pos[1] = (Flt)(yres*0.5);
 			a->pos[2] = 0.0f;
@@ -77,7 +77,7 @@ extern void SpawnZombies(Game *g)
 			//flips out occasionally, angle is always wrong at spawn~bware
 		}
 		//top
-		if((j%5)==4){
+		if((j%9)==4){
 			a->pos[0] = (Flt)(xres*0.65);
 			a->pos[1] = (Flt)(yres);
 			a->pos[2] = 0.0f;

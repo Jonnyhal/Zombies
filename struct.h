@@ -209,7 +209,7 @@ struct Game {
                 startScreen = 1;
                 gameover = 0;
                 running = 1;
-                zombieSpawn = 5;
+                zombieSpawn = 9;
         }
 };
 
