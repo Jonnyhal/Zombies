@@ -53,6 +53,7 @@
 #include <GL/glx.h>
 #include "log.h"
 #include "struct.h"
+//#include <GL/freeglut.h>
 extern "C" {
 #include "fonts.h"
 #include "ppm.h"
@@ -630,6 +631,8 @@ void spawnZombies(Game *g)
     clock_gettime(CLOCK_REALTIME, &g->bulletTimer);
     clock_gettime(CLOCK_REALTIME, &g->multiTimer);
     clock_gettime(CLOCK_REALTIME, &g->player1.multiTimer);
+    clock_gettime(CLOCK_REALTIME, &g->player1.invulnTimer);
+    clock_gettime(CLOCK_REALTIME, &g->player1.rfTimer);
     g->player1.radius = 10;
 
 }
@@ -1050,6 +1053,20 @@ void physics(Game *g)
 	std::cout<<"returning again\n";
 	return;
     }
+    
+    //Player collision with loot
+    Loot *l = g->lhead;
+    while (l) {
+	//std::cout<<"checking for loot coll\n";
+        player_loot_collision(g, l);
+        l = l->next;
+    }
+
+    if (g->player1.tempinvuln)
+        updateInvuln(g);
+    if (g->player1.tempRF)
+        updateRF(g);
+    //
     //---------------------------------------------------
     //check keys pressed now
     //NOTE:: ANGLE CHECKED COUNTER CLOCKWISE

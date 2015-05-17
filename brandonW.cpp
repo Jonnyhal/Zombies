@@ -432,9 +432,56 @@ extern void bul_zomb_collision(Game *g, Bullet *x)
 	}
 }
 
+extern void player_loot_collision(Game *g, Loot *l)
+{
+	int d0, d1, dist;
+	d0 = g->player1.pos[0] - l->pos[0];
+	d1 = g->player1.pos[1] - l->pos[1];
+	dist = (d0*d0 + d1*d1);
+	if (dist < 200) {
+		//loot is hit
+		std::cout<<"loot collision!\n";
+		powerUp(g, l);
+		deleteLoot(g, l);
+	}
+}
 
+extern void powerUp(Game *g, Loot *l)
+{
+	switch (l->type) {
+		case 0:
+			//nothing
+			break;
+		case 1:
+			//rapid fire
+			g->player1.tempRF = 1;
+			rftime(g);
+			break;
+		case 2:
+			//double shot
+			g->player1.bulletType = 2;
+			break;
+		case 3: 
+			//triple shot
+			g->player1.bulletType = 3;
+			break;
+		case 4:
+			//temp invuln
+			g->player1.tempinvuln = 1;
+			g->player1.invuln = 1;
+			invulntime(g);
+			break;
+		case 5:
+			//wave clear
+			break;
+		case 6:
+			//1up
+			g->player1.lives++;
+			break;
+	}
+}
 /*=============== LOOT IDEAS ==================
-  - 12% chance for a drop to occur...
+  - 5% chance for a drop to occur...
   ------------------------------------
   - 25% chance to drop double shot
   - 12% chance to drop triple shot
@@ -456,7 +503,7 @@ extern void lootDrop(Game *g, Zombie *a)
 	// Create a random number from 1-100
 	int r1 = rand() % 100 + 1;
 	std::cout<<r1<<"\n";
-	if (r1%8 == 0) {
+	if (r1%20 == 0) {
 		//we have a drop... now what will it be?
 		Loot *l = new Loot;
 		l->pos[0] = a->pos[0];
@@ -585,5 +632,50 @@ extern void updateMulti(Game *g)
 		g->player1.multi = 1.0;
 	}
 }
+
+extern void invulntime(Game *g)
+{
+	struct timespec mt;
+	clock_gettime(CLOCK_REALTIME, &mt);
+	double ts = timeDiff(&g->player1.invulnTimer, &mt);
+	if (ts > 0.1) {
+		timeCopy(&g->player1.invulnTimer, &mt);
+	}
+}
+
+extern void updateInvuln(Game *g)
+{
+	struct timespec bt;
+	clock_gettime(CLOCK_REALTIME, &bt);
+	double ts = timeDiff(&g->player1.invulnTimer, &bt);
+	if (ts > 10) {
+		//turn off invuln
+		g->player1.tempinvuln = 0;
+		g->player1.invuln = 0;
+	}
+}
+
+extern void rftime(Game *g)
+{
+	struct timespec mt;
+	clock_gettime(CLOCK_REALTIME, &mt);
+	double ts = timeDiff(&g->player1.rfTimer, &mt);
+	if (ts > 0.1) {
+		timeCopy(&g->player1.rfTimer, &mt);
+	}
+}
+
+extern void updateRF(Game *g)
+{
+	struct timespec bt;
+	clock_gettime(CLOCK_REALTIME, &bt);
+	double ts = timeDiff(&g->player1.rfTimer, &bt);
+	if (ts > 10) {
+		//time to reset timer.
+		g->player1.tempRF = 0;
+	}
+}
+
+
 
 

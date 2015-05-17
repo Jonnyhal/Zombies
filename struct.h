@@ -54,13 +54,15 @@ struct Player{
         int check2;
         int lives;
         int invuln;
+	int tempinvuln;
         int bulletType;
         int oldbType;
 	float multi;
         int is_firing;
+	int tempRF;
         float angle;
         float color[3];
-        struct timespec multiTimer;
+        struct timespec multiTimer, invulnTimer, rfTimer;
 	Player() {
                 VecZero(dir);
                 currentcombo = 0;
@@ -84,6 +86,8 @@ struct Player{
                 lives = 3;
                 bulletType = 1;
 		oldbType = 1;
+		tempinvuln = 0;
+		tempRF = 0;
         }
 };
 
