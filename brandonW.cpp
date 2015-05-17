@@ -34,6 +34,7 @@ extern void fire_weapon(Game *g)
 				//shoot a bullet...
 				Bullet *b = new Bullet;
 				b->type = 1;
+				g->player1.oldbType = 1;
 				timeCopy(&b->time, &bt);
 				b->pos[0] = g->player1.pos[0];
 				b->pos[1] = g->player1.pos[1];
@@ -42,7 +43,9 @@ extern void fire_weapon(Game *g)
 				b->origin[2] = g->player1.pos[2];
 				b->vel[0] = 0;
 				b->vel[1] = 0;
-				b->angle = g->player1.angle;
+				b->angle = g->player1.angle+90.0;
+				if(b->angle > 360)
+					b->angle = b->angle - 360;
 				//convert player1 angle to radians
 				Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
 				//convert angle to a vector
@@ -70,6 +73,7 @@ extern void fire_weapon(Game *g)
 				b->type = 1;
 				Bullet *c = new Bullet;
 				c->type = 2;
+				g->player1.oldbType = 2;
 				timeCopy(&b->time, &bt);
 				timeCopy(&c->time, &bt);
 				b->pos[0] = g->player1.pos[0];
@@ -84,6 +88,12 @@ extern void fire_weapon(Game *g)
 				c->origin[1] = g->player1.pos[1];
 				c->vel[0] = 0;
 				c->vel[1] = 0;
+				b->angle = g->player1.angle+110.0;
+				if(b->angle > 360)
+					b->angle = b->angle - 360;
+				c->angle = g->player1.angle+70.0;
+				if(b->angle > 360)
+					b->angle = b->angle - 360;
 				//convert player1 angle to radians
 				Flt rad1 = ((g->player1.angle+110.0) / 360.0f) * PI * 2.0;
 				Flt rad2 = ((g->player1.angle+70.0) / 360.0f) * PI * 2.0;
@@ -132,6 +142,7 @@ extern void fire_weapon(Game *g)
 				c->type = 2;
 				Bullet *d = new Bullet;
 				d->type = 3;
+				g->player1.oldbType = 3;
 				timeCopy(&b->time, &bt);
 				timeCopy(&c->time, &bt);
 				timeCopy(&d->time, &bt);
@@ -153,6 +164,15 @@ extern void fire_weapon(Game *g)
 				d->origin[1] = g->player1.pos[1];
 				d->vel[0] = 0;
 				d->vel[1] = 0;
+				b->angle = g->player1.angle+110.0;
+				if(b->angle > 360)
+					b->angle = b->angle - 360;
+				c->angle = g->player1.angle+70.0;
+				if(b->angle > 360)
+					b->angle = b->angle - 360;
+				d->angle = g->player1.angle+90.0;
+				if(b->angle > 360)
+					b->angle = b->angle - 360;
 				//convert player1 angle to radians
 				Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
 				Flt rad1 = ((g->player1.angle+110.0) / 360.0f) * PI * 2.0;
@@ -213,34 +233,30 @@ extern void fire_weapon(Game *g)
 	}
 }
 
-extern void bulletDraw(Bullet *b)
+extern void bulletDraw(Bullet *b, Game *g)
 {
 	while (b) {
 		//Log("draw bullet...\n");
 		//glColor3f(1.0, 1.0, 1.0);
 		glColor3fv(b->color);
 		glPushMatrix();
-		/*glBegin(GL_POINTS);
-		glVertex2f(b->pos[0],      b->pos[1]);
-		glVertex2f(b->pos[0]-1.0f, b->pos[1]);
-		glVertex2f(b->pos[0]+1.0f, b->pos[1]);
-		glVertex2f(b->pos[0],      b->pos[1]-1.0f);
-		glVertex2f(b->pos[0],      b->pos[1]+1.0f);
-		glColor3f(0.8, 0.8, 0.8);
-		glVertex2f(b->pos[0]-1.0f, b->pos[1]-1.0f);
-		glVertex2f(b->pos[0]-1.0f, b->pos[1]+1.0f);
-		glVertex2f(b->pos[0]+1.0f, b->pos[1]-1.0f);
-		glVertex2f(b->pos[0]+1.0f, b->pos[1]+1.0f);
-		glEnd();*/
-		//glTranslatef(b->origin[0], b->origin[1], b->origin[2]);
-		//glRotatef(1.0f, 0.0f, 0.0f, 1.0f);
 		//std::cout<<"bullet angle: " << b->angle << "\n";
 		//std::cout<<"bullet posxy: " << b->pos[0] << ", " << b->pos[1] << ", " << b->pos[2] << "\n";
+		glTranslatef(b->pos[0], b->pos[1], 0.0f);
+                if (b->type == 1) {
+                        glRotatef(b->angle, 0.0f, 0.0f, 1.0f);
+                } else if (b->type == 2) {
+
+                        glRotatef(b->angle, 0.0f, 0.0f, 1.0f);
+                } else if (b->type == 3) {
+                        glRotatef(b->angle, 0.0f, 0.0f, 1.0f);
+                }
+
 		glBegin(GL_QUADS);
-		glVertex2f(b->pos[0]-8.0f, b->pos[1]+2.0f);
-		glVertex2f(b->pos[0]+8.0f, b->pos[1]+2.0f);
-		glVertex2f(b->pos[0]+8.0f, b->pos[1]-2.0f);
-		glVertex2f(b->pos[0]-8.0f, b->pos[1]-2.0f);
+			glVertex2f(-8.0f, 2.0f);
+			glVertex2f(8.0f, 2.0f);
+			glVertex2f(8.0f, -2.0f);
+			glVertex2f(-8.0f, -2.0f);
 		/*glColor3f(0.8, 0.8, 0.8);
 		glVertex2f(b->pos[0]-8.0f, b->pos[1]-8.0f);
 		glVertex2f(b->pos[0]-8.0f, b->pos[1]+8.0f);
@@ -302,6 +318,15 @@ extern void updateBulletPos(Game *g, Bullet *b)
 		//move the bullet
 		b->pos[0] += b->vel[0];
 		b->pos[1] += b->vel[1];
+		//delete old bullets if new bullet type is gained
+		if (g->player1.check2 == 1) {
+                        Bullet *saveb = b->next;
+                        deleteBullet(g, b);
+                        b = saveb;
+                        g->nbullets--;
+                        continue;
+                }
+
 		//Check for collision with window edges
 		if (b->pos[0] < 0.0) {
 			//b->pos[0] += (float)xres;

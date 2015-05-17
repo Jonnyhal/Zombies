@@ -993,6 +993,8 @@ void physics(Game *g)
     //std::cout<<"Player X:" << g->player1.pos[0] <<" , Player Y:" << g->player1.pos[1] <<"\n";
     //
     //Update bullet positions
+    if (g->player1.oldbType != g->player1.bulletType)
+	g->player1.check2 = 1;
     updateBulletPos(g, g->bhead);
     if (g->player1.bulletType == 2 || g->player1.bulletType == 3) {
 	updateBulletPos(g, g->chead);
@@ -1001,6 +1003,7 @@ void physics(Game *g)
 	}
     }
 
+    g->player1.check2 = 0;
     updateMulti(g);	
     //
     //Update asteroid positions

@@ -51,10 +51,12 @@ struct Player{
         int score;
         int currentcombo;
         int check;
+        int check2;
         int lives;
         int invuln;
         int bulletType;
-        float multi;
+        int oldbType;
+	float multi;
         int is_firing;
         float angle;
         float color[3];
@@ -76,10 +78,12 @@ struct Player{
                 multi = 1.0;
                 score = 0;
                 check = 0;
+		check2 = 0;
                 radius = 20;
                 invuln = 0;
                 lives = 3;
                 bulletType = 1;
+		oldbType = 1;
         }
 };
 
