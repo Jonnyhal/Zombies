@@ -523,7 +523,7 @@ void spawnZombies(Game *g)
 	    case 0:
 		//left part of screen 3/4 down from top
 		a->pos[0] = (Flt)(0);
-		a->pos[1] = (Flt)(yres*0.65);
+		a->pos[1] = (Flt)(rnd() * yres);
 		a->pos[2] = 0.0f;
 		a->color[0] = 0.5;
 		a->color[1] = 2.5;
@@ -534,7 +534,7 @@ void spawnZombies(Game *g)
 	    case 1:
 		//left part of screen 1/4 down from the top
 		a->pos[0] = (Flt)(0);
-		a->pos[1] = (Flt)(yres*0.25);
+		a->pos[1] = (Flt)(rnd() * yres);
 		a->pos[2] = 0.0f;
 		a->color[0] = 0.5;
 		a->color[1] = 2.5;
@@ -544,7 +544,7 @@ void spawnZombies(Game *g)
 		break;
 	    case 2:
 		//bottom
-		a->pos[0] = (Flt)(xres*0.25);//(xres*rnd())
+		a->pos[0] = (Flt)(rnd() * xres);//(xres*rnd())
 		a->pos[1] = (Flt)(0);
 		a->pos[2] = 0.0f;
 		a->color[0] = 0.5;
@@ -556,7 +556,7 @@ void spawnZombies(Game *g)
 	    case 3:
 		//right middle
 		a->pos[0] = (Flt)(xres);
-		a->pos[1] = (Flt)(yres*0.51);
+		a->pos[1] = (Flt)(rnd() * yres);
 		a->pos[2] = 0.0f;
 		a->color[0] = 0.5;
 		a->color[1] = 2.5;
@@ -567,7 +567,7 @@ void spawnZombies(Game *g)
 		//flips out occasionally, angle is always wrong at spawn~bware
 	    case 4:
 		//top right
-		a->pos[0] = (Flt)(xres*0.65);
+		a->pos[0] = (Flt)(rnd() * xres);
 		a->pos[1] = (Flt)(yres);
 		a->pos[2] = 0.0f;
 		a->color[0] = 0.5;
@@ -578,7 +578,7 @@ void spawnZombies(Game *g)
 		break;
 	    case 5:
 		//top left
-		a->pos[0] = (Flt)(xres*0.25);
+		a->pos[0] = (Flt)(rnd() * xres);
 		a->pos[1] = (Flt)(yres);
 		a->pos[2] = 0.0f;
 		a->color[0] = 0.5;
@@ -600,7 +600,7 @@ void spawnZombies(Game *g)
 		break;
 	    case 7:
 		//bottom right
-		a->pos[0] = (Flt)(xres*0.65);
+		a->pos[0] = (Flt)(rnd() * xres);
 		a->pos[1] = (Flt)(0);
 		a->pos[2] = 0.0f;
 		a->color[0] = 0.5;
@@ -611,7 +611,7 @@ void spawnZombies(Game *g)
 		break;
 	    case 8:
 		//right bottom
-		a->pos[0] = (Flt)(xres);
+		a->pos[0] = (Flt)(rnd() * xres);
 		a->pos[1] = (Flt)(0);
 		a->pos[2] = 0.0f;
 		a->color[0] = 0.5;
@@ -645,11 +645,7 @@ void zMove(Game *g, Zombie *a)
     d0 = g->player1.pos[0] - a->pos[0];
     d1 = g->player1.pos[1] - a->pos[1];
     dist = sqrt(d0*d0 + d1*d1);
-    if (dist < 700) {
-	a->vel[0] = d0/dist * a->speed;
-	a->vel[1] = d1/dist * a->speed;
-    }
-    if (g->player1.origin[0] != g->player1.pos[0] || g->player1.origin[1] != g->player1.pos[1]) {
+    if (dist < 100000) {
 	a->vel[0] = d0/dist * a->speed;
 	a->vel[1] = d1/dist * a->speed;
     }
@@ -852,33 +848,25 @@ void buildZombieFragment(Zombie *ta, Zombie *a)
 
 void zomb_zomb_collision(Game *g, Zombie *a)
 {
-    Zombie *b = a->prev;
     Zombie *c = a->next;
-    Flt z0, z1, z2, z3, zdist, zdist1;
+    Flt z0, z1, zdist;
     //zombie on zombie collision
-
-	if (b) {
-	    z0 = a->pos[0] - b->pos[0];
-	    z1 = a->pos[1] - b->pos[1];
-	    zdist = sqrt(z0*z0 + z1*z1);
-	    if(zdist <= a->radius) {
-		//a->pos[0] = b->pos[0] + (z0/zdist) * a->radius * 1.1;
-		//a->pos[1] = b->pos[1] + (z1/zdist) * a->radius * 1.1;
-		a->vel[0] += z0/zdist * 1.5;
-		a->vel[1] += z1/zdist * 1.5;
-	    }
-	    if (c) {
-	      z2 = a->pos[0] - c->pos[0];
-	      z3 = a->pos[1] - c->pos[1];
-	      zdist1 = sqrt(z2*z2 + z3*z3);
-	      if(zdist1 <= a->radius) {
+	while (c) {
+		std::cout << "zombie collision check" << std::endl;
+	//if (c) {
+	      z0 = a->pos[0] - c->pos[0];
+	      z1 = a->pos[1] - c->pos[1];
+	      zdist = sqrt(z0*z0 + z1*z1);
+	      if(zdist <= a->radius) {
 	    //a->pos[0] = b->pos[0] + (z0/zdist) * a->radius * 1.1;
 	    //a->pos[1] = b->pos[1] + (z1/zdist) * a->radius * 1.1;
-	    a->vel[0] += z2/zdist1 * 5.0;
-	    a->vel[1] += z3/zdist1 * 5.0;
-	      }
+	    	a->vel[0] += z0/zdist * 5.0;
+	    	a->vel[1] += z1/zdist * 5.0;
+		  }
+		c = c->next;
+	      
 	    }
-	}
+	
 }
 void player_zomb_collision(Game *g)
 {
