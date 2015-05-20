@@ -826,46 +826,11 @@ void player_zomb_collision(Game *g)
 					}
 					//zombieflee function??
 					//DEATH ANIMATION HERE
-					int cnt = 0;
-					struct timespec deathTimer, counter;
-					clock_gettime(CLOCK_REALTIME, &deathTimer);
-					clock_gettime(CLOCK_REALTIME, &counter);
-					double ts = timeDiff(&deathTimer, &counter);
-					/*while (ts < 3.0) {
-					  clock_gettime(CLOCK_REALTIME, &counter);
-					  ts = timeDiff(&deathTimer, &counter);
-					  if (ts > 0.0 && !cnt) {
-					  std::cout<<"3... \n";
-					  cnt = 1;
-					  } else if (ts > 1.0 && cnt == 1) {
-					  std::cout<<"2... \n";
-					  cnt++;
-					  } else if (ts > 2.0 && cnt == 2) {
-					  std::cout<<"1... \n";
-					  cnt++;
-					  }*/
-					//revival animation?Zombie *a = g->ahead;Zombie *a = g->ahead;
-					
 					Zombie *a = g->ahead;
 
 					while (a) {
 						//Try nesting everything in an if/else with a randomized bool
 						//to determine if zombie is wandering or running at player?
-						//a->pos[0] = 0;
-						//a->pos[1] = 0;
-						/*//Check for collision with window edges
-						  if (a->pos[0] < -100.0) {
-						  a->pos[0] += (float)xres+200;
-						  }
-						  else if (a->pos[0] > (float)xres+100) {
-						  a->pos[0] -= (float)xres+200;
-						  }
-						  else if (a->pos[1] < -100.0) {
-						  a->pos[1] += (float)yres+200;
-						  }
-						  else if (a->pos[1] > (float)yres+100) {
-						  a->pos[1] -= (float)yres+200;
-						  }*/
 						for (int j=0; j<g->nzombies; j++) {
 							int zcount = (j % 4);
 							std::cout << zcount << std::endl;
@@ -874,33 +839,21 @@ void player_zomb_collision(Game *g)
 								a->pos[0] = (Flt)(0);
 								a->pos[1] = (Flt)(rnd() * yres);
 								a->pos[2] = 0.0f;
-								a->color[0] = 0.5;
-								a->color[1] = 2.5;
-								a->color[2] = 1.0;
 							} else if (zcount == 1) {
 								//right
 								a->pos[0] = (Flt)(xres);
 								a->pos[1] = (Flt)(rnd() * yres);
 								a->pos[2] = 0.0f;
-								a->color[0] = 0.5;
-								a->color[1] = 2.5;
-								a->color[2] = 1.0;
 							} else if (zcount == 2) {
 								//top
 								a->pos[0] = (Flt)(rnd() * xres);//(xres*rnd())
 								a->pos[1] = (Flt)(yres);
 								a->pos[2] = 0.0f;
-								a->color[0] = 0.5;
-								a->color[1] = 2.5;
-								a->color[2] = 1.0;
 							} else if (zcount == 3) {
 								//bottom
 								a->pos[0] = (Flt)(rnd() * xres);
 								a->pos[1] = (Flt)(0);
 								a->pos[2] = 0.0f;
-								a->color[0] = 0.5;
-								a->color[1] = 2.5;
-								a->color[2] = 1.0;
 							}
 
 							a->angle += a->rotate;
@@ -909,340 +862,336 @@ void player_zomb_collision(Game *g)
 					}
 					g->player1.pos[0] = xres/2;
 					g->player1.pos[1] = yres/2;
-
 				}
-
-
 				//empower zombie? xD...
 				if (z == NULL)
 					return;
 				g->player1.check = 0;
-				}
-				z = z->next;
 			}
-			g->player1.check = 0;
+			z = z->next;
+		}
+		g->player1.check = 0;
+	}
+}
+void physics(Game *g)
+{
+	//Update player1 position
+	g->player1.origin[0] = g->player1.pos[0];
+	g->player1.origin[1] = g->player1.pos[1];
+
+	g->player1.pos[0] += g->player1.vel[0];
+	g->player1.pos[1] += g->player1.vel[1];
+	//Check for collision with window edges
+	//instantiate background change based on matrix
+	//remove all zombies and objects and remake them
+	if (g->player1.pos[0] < 0.0) {
+		g->player1.pos[0] += (float)xres;
+	}
+	else if (g->player1.pos[0] > (float)xres) {
+		g->player1.pos[0] -= (float)xres;
+	}
+	else if (g->player1.pos[1] < 0.0) {
+		g->player1.pos[1] += (float)yres;
+	}
+	else if (g->player1.pos[1] > (float)yres) {
+		g->player1.pos[1] -= (float)yres;
+	}
+	//
+	//std::cout<<"Player X:" << g->player1.pos[0] <<" , Player Y:" << g->player1.pos[1] <<"\n";
+	//
+	//Update bullet positions
+	if (g->player1.oldbType != g->player1.bulletType)
+		g->player1.check2 = 1;
+	updateBulletPos(g, g->bhead);
+	if (g->player1.bulletType == 2 || g->player1.bulletType == 3) {
+		updateBulletPos(g, g->chead);
+		if(g->player1.bulletType == 3) {
+			updateBulletPos(g, g->dhead);
 		}
 	}
 
-	void physics(Game *g)
-	{
-		//Update player1 position
-		g->player1.origin[0] = g->player1.pos[0];
-		g->player1.origin[1] = g->player1.pos[1];
-
-		g->player1.pos[0] += g->player1.vel[0];
-		g->player1.pos[1] += g->player1.vel[1];
+	g->player1.check2 = 0;
+	updateMulti(g);	
+	//
+	//Update asteroid positions
+	Zombie *a = g->ahead;
+	while (a) {
+		//Try nesting everything in an if/else with a randomized bool
+		//to determine if zombie is wandering or running at player?
+		zMove(g, a);
+		zomb_zomb_collision(g, a);
+		a->pos[0] += a->vel[0];
+		a->pos[1] += a->vel[1];
 		//Check for collision with window edges
-		//instantiate background change based on matrix
-		//remove all zombies and objects and remake them
-		if (g->player1.pos[0] < 0.0) {
-			g->player1.pos[0] += (float)xres;
+		if (a->pos[0] < -100.0) {
+			a->pos[0] += (float)xres+200;
 		}
-		else if (g->player1.pos[0] > (float)xres) {
-			g->player1.pos[0] -= (float)xres;
+		else if (a->pos[0] > (float)xres+100) {
+			a->pos[0] -= (float)xres+200;
 		}
-		else if (g->player1.pos[1] < 0.0) {
-			g->player1.pos[1] += (float)yres;
+		else if (a->pos[1] < -100.0) {
+			a->pos[1] += (float)yres+200;
 		}
-		else if (g->player1.pos[1] > (float)yres) {
-			g->player1.pos[1] -= (float)yres;
+		else if (a->pos[1] > (float)yres+100) {
+			a->pos[1] -= (float)yres+200;
 		}
-		//
-		//std::cout<<"Player X:" << g->player1.pos[0] <<" , Player Y:" << g->player1.pos[1] <<"\n";
-		//
-		//Update bullet positions
-		if (g->player1.oldbType != g->player1.bulletType)
-			g->player1.check2 = 1;
-		updateBulletPos(g, g->bhead);
-		if (g->player1.bulletType == 2 || g->player1.bulletType == 3) {
-			updateBulletPos(g, g->chead);
-			if(g->player1.bulletType == 3) {
-				updateBulletPos(g, g->dhead);
-			}
-		}
-
-		g->player1.check2 = 0;
-		updateMulti(g);	
-		//
-		//Update asteroid positions
-		Zombie *a = g->ahead;
-		while (a) {
-			//Try nesting everything in an if/else with a randomized bool
-			//to determine if zombie is wandering or running at player?
-			zMove(g, a);
-			zomb_zomb_collision(g, a);
-			a->pos[0] += a->vel[0];
-			a->pos[1] += a->vel[1];
-			//Check for collision with window edges
-			if (a->pos[0] < -100.0) {
-				a->pos[0] += (float)xres+200;
-			}
-			else if (a->pos[0] > (float)xres+100) {
-				a->pos[0] -= (float)xres+200;
-			}
-			else if (a->pos[1] < -100.0) {
-				a->pos[1] += (float)yres+200;
-			}
-			else if (a->pos[1] > (float)yres+100) {
-				a->pos[1] -= (float)yres+200;
-			}
-			a->angle += a->rotate;
-			a = a->next;
-		}
-		//Zombie collision with bullets?
-		//If collision detected:
-		//     1. delete the bullet
-		//     2. break the asteroid into pieces
-		//        if asteroid small, delete it
-		bul_zomb_collision(g, g->bhead);
-		if (g->player1.bulletType == 2 || g->player1.bulletType == 3) {
-			bul_zomb_collision(g, g->chead);
-			if (g->player1.bulletType == 3) {
-				bul_zomb_collision(g, g->dhead);
-			}
-		}
-
-		//Player collision with zombies
-		player_zomb_collision(g);
-		if(g->gameover) {
-			std::cout<<"returning again\n";
-			return;
-		}
-
-		//Player collision with loot
-		Loot *l = g->lhead;
-		while (l) {
-			//std::cout<<"checking for loot coll\n";
-			player_loot_collision(g, l);
-			l = l->next;
-		}
-
-		if (g->player1.tempinvuln)
-			updateInvuln(g);
-		if (g->player1.tempRF)
-			updateRF(g);
-		//
-		//---------------------------------------------------
-		//check keys pressed now
-		//NOTE:: ANGLE CHECKED COUNTER CLOCKWISE
-
-		last_Position_S = g->player1.angle;
-		//BREAK if attempting to move opposite directions at same time
-		if (((keys[XK_Left] || keys[XK_a]) && (keys[XK_Right] || keys[XK_d])) ||
-				((keys[XK_Up]   || keys[XK_w]) && (keys[XK_Down]  || keys[XK_s]))) {
-			//convert player1 angle to radians
-			//convert angle to a vector
-			g->player1.vel[0] = 0;
-			g->player1.vel[1] = 0;
-			g->player1.angle = last_Position_S;
-			if (g->player1.angle >= 360.0f)
-				g->player1.angle -= 360.0f;
-		}
-		else if ((keys[XK_Up] || keys[XK_w]) && (keys[XK_Left] || keys[XK_a])) {
-			normalize(g->player1.vel);
-			g->player1.vel[0] = -3;
-			g->player1.vel[1] = 3;
-		}
-		else if ((keys[XK_Down] || keys[XK_s]) && (keys[XK_Left] || keys[XK_a])) {
-			normalize(g->player1.vel);
-			g->player1.vel[0] = -3;
-			g->player1.vel[1] = -3;
-		}
-		else if ((keys[XK_Down] || keys[XK_s]) && (keys[XK_Right] || keys[XK_d])) {
-			normalize(g->player1.vel);
-			g->player1.vel[0] = 3;
-			g->player1.vel[1] = -3;
-
-		}
-		else if ((keys[XK_Up] || keys[XK_w]) && (keys[XK_Right] || keys[XK_d])) {
-			normalize(g->player1.vel);
-			g->player1.vel[0] = 3;
-			g->player1.vel[1] = 3;
-
-		}
-		else if (keys[XK_Left] || keys[XK_a]) {
-			normalize(g->player1.vel);
-			g->player1.vel[0] = -4;
-
-		}
-		else if (keys[XK_Right] || keys[XK_d]) {
-			normalize(g->player1.vel);
-			g->player1.vel[0] = 4;
-
-		}
-		else if (keys[XK_Up] || keys[XK_w]) {
-			normalize(g->player1.vel);
-			g->player1.vel[1] = 4;
-
-		}
-		else if (keys[XK_Down] || keys[XK_s]) {
-			normalize(g->player1.vel);
-			g->player1.vel[1] = -4;
-
-		}
-		else {
-			//convert player1 angle to radians
-			//convert angle to a vector
-			g->player1.vel[0] = 0;
-			g->player1.vel[1] = 0;
-			g->player1.angle = last_Position_S;
-			if (g->player1.angle >= 360.0f)
-				g->player1.angle -= 360.0f;
-
-		}
-		player_Ang(g);
-		if (keys[XK_i]) {
-			g->player1.invuln++;
-			if (g->player1.invuln == 2)
-				g->player1.invuln = 0;
-			keys[XK_i] = 0;
-		}
-
-		if (keys[XK_space]) {
-			fire_weapon(g);
-		}
-		if (g->player1.is_firing) {
-			fire_weapon(g);
-		}
-
-		if (keys[XK_1]) {
-			g->player1.bulletType = 1;
-
-		} else if (keys[XK_2]) {
-			g->player1.bulletType = 2;
-
-		} else if (keys[XK_3]) {
-			g->player1.bulletType = 3;
+		a->angle += a->rotate;
+		a = a->next;
+	}
+	//Zombie collision with bullets?
+	//If collision detected:
+	//     1. delete the bullet
+	//     2. break the asteroid into pieces
+	//        if asteroid small, delete it
+	bul_zomb_collision(g, g->bhead);
+	if (g->player1.bulletType == 2 || g->player1.bulletType == 3) {
+		bul_zomb_collision(g, g->chead);
+		if (g->player1.bulletType == 3) {
+			bul_zomb_collision(g, g->dhead);
 		}
 	}
 
-	void render_StartScreen(Game *g)
-	{
-		Rect r,s;
-		glClear(GL_COLOR_BUFFER_BIT);
-		sscreen_background(bgTexture0, 1.0, 1.0, 1.0, 1.0);
-		//
-		//XDrawString(dis,win,gc,x,y, string, strlen(string));
-		r.bot = yres - yres*0.7;
-		r.left = xres - xres*0.5;
-		r.center = 1;
-		ggprint16(&r, 32, 0x00ff00ff, "START GAME");
-		ggprint16(&r, 32, 0x00ff00ff, "OPTIONS");
-		ggprint16(&r, 32, 0x00ff00ff, "HIGH SCORES");
-		//...
+	//Player collision with zombies
+	player_zomb_collision(g);
+	if(g->gameover) {
+		std::cout<<"returning again\n";
+		return;
+	}
 
-		switch (g->current_selection) {
-			case 1: {
-					s.bot = yres - yres*0.7;
-					s.left = xres - xres*0.5;
-					s.center = 1;
-					ggprint16(&s, 32, 0x00ffffff, "[                   ]");
-					break;
+	//Player collision with loot
+	Loot *l = g->lhead;
+	while (l) {
+		//std::cout<<"checking for loot coll\n";
+		player_loot_collision(g, l);
+		l = l->next;
+	}
+
+	if (g->player1.tempinvuln)
+		updateInvuln(g);
+	if (g->player1.tempRF)
+		updateRF(g);
+	//
+	//---------------------------------------------------
+	//check keys pressed now
+	//NOTE:: ANGLE CHECKED COUNTER CLOCKWISE
+
+	last_Position_S = g->player1.angle;
+	//BREAK if attempting to move opposite directions at same time
+	if (((keys[XK_Left] || keys[XK_a]) && (keys[XK_Right] || keys[XK_d])) ||
+			((keys[XK_Up]   || keys[XK_w]) && (keys[XK_Down]  || keys[XK_s]))) {
+		//convert player1 angle to radians
+		//convert angle to a vector
+		g->player1.vel[0] = 0;
+		g->player1.vel[1] = 0;
+		g->player1.angle = last_Position_S;
+		if (g->player1.angle >= 360.0f)
+			g->player1.angle -= 360.0f;
+	}
+	else if ((keys[XK_Up] || keys[XK_w]) && (keys[XK_Left] || keys[XK_a])) {
+		normalize(g->player1.vel);
+		g->player1.vel[0] = -3;
+		g->player1.vel[1] = 3;
+	}
+	else if ((keys[XK_Down] || keys[XK_s]) && (keys[XK_Left] || keys[XK_a])) {
+		normalize(g->player1.vel);
+		g->player1.vel[0] = -3;
+		g->player1.vel[1] = -3;
+	}
+	else if ((keys[XK_Down] || keys[XK_s]) && (keys[XK_Right] || keys[XK_d])) {
+		normalize(g->player1.vel);
+		g->player1.vel[0] = 3;
+		g->player1.vel[1] = -3;
+
+	}
+	else if ((keys[XK_Up] || keys[XK_w]) && (keys[XK_Right] || keys[XK_d])) {
+		normalize(g->player1.vel);
+		g->player1.vel[0] = 3;
+		g->player1.vel[1] = 3;
+
+	}
+	else if (keys[XK_Left] || keys[XK_a]) {
+		normalize(g->player1.vel);
+		g->player1.vel[0] = -4;
+
+	}
+	else if (keys[XK_Right] || keys[XK_d]) {
+		normalize(g->player1.vel);
+		g->player1.vel[0] = 4;
+
+	}
+	else if (keys[XK_Up] || keys[XK_w]) {
+		normalize(g->player1.vel);
+		g->player1.vel[1] = 4;
+
+	}
+	else if (keys[XK_Down] || keys[XK_s]) {
+		normalize(g->player1.vel);
+		g->player1.vel[1] = -4;
+
+	}
+	else {
+		//convert player1 angle to radians
+		//convert angle to a vector
+		g->player1.vel[0] = 0;
+		g->player1.vel[1] = 0;
+		g->player1.angle = last_Position_S;
+		if (g->player1.angle >= 360.0f)
+			g->player1.angle -= 360.0f;
+
+	}
+	player_Ang(g);
+	if (keys[XK_i]) {
+		g->player1.invuln++;
+		if (g->player1.invuln == 2)
+			g->player1.invuln = 0;
+		keys[XK_i] = 0;
+	}
+
+	if (keys[XK_space]) {
+		fire_weapon(g);
+	}
+	if (g->player1.is_firing) {
+		fire_weapon(g);
+	}
+
+	if (keys[XK_1]) {
+		g->player1.bulletType = 1;
+
+	} else if (keys[XK_2]) {
+		g->player1.bulletType = 2;
+
+	} else if (keys[XK_3]) {
+		g->player1.bulletType = 3;
+	}
+}
+
+void render_StartScreen(Game *g)
+{
+	Rect r,s;
+	glClear(GL_COLOR_BUFFER_BIT);
+	sscreen_background(bgTexture0, 1.0, 1.0, 1.0, 1.0);
+	//
+	//XDrawString(dis,win,gc,x,y, string, strlen(string));
+	r.bot = yres - yres*0.7;
+	r.left = xres - xres*0.5;
+	r.center = 1;
+	ggprint16(&r, 32, 0x00ff00ff, "START GAME");
+	ggprint16(&r, 32, 0x00ff00ff, "OPTIONS");
+	ggprint16(&r, 32, 0x00ff00ff, "HIGH SCORES");
+	//...
+
+	switch (g->current_selection) {
+		case 1: {
+				s.bot = yres - yres*0.7;
+				s.left = xres - xres*0.5;
+				s.center = 1;
+				ggprint16(&s, 32, 0x00ffffff, "[                   ]");
+				break;
+			}
+		case 2: {
+				s.bot = yres - yres*0.7 - 32;
+				s.left = xres - xres*0.5;
+				s.center = 1;
+				ggprint16(&s, 32, 0x00ffffff, "[           ]");
+				break;
+			}
+		case 3: {
+				s.bot = yres - yres*0.7 - 64;
+				s.left = xres - xres*0.5;
+				s.center = 1;
+				ggprint16(&s, 32, 0x00ffffff, "[                    ]");
+				break;
+			}
+		case 0: {   // Enter was pressed
+				switch (g->old_selection) {
+					case 1: {
+							g->startScreen = 0;
+							g->current_selection = g->old_selection;
+							break;
+						}
+					case 2: {
+							//options...
+							g->current_selection = g->old_selection;
+							break;
+						}
+					case 3: {
+							//High Scores page...
+							g->current_selection = g->old_selection;
+							break;
+						}
 				}
-			case 2: {
-					s.bot = yres - yres*0.7 - 32;
-					s.left = xres - xres*0.5;
-					s.center = 1;
-					ggprint16(&s, 32, 0x00ffffff, "[           ]");
-					break;
-				}
-			case 3: {
-					s.bot = yres - yres*0.7 - 64;
-					s.left = xres - xres*0.5;
-					s.center = 1;
-					ggprint16(&s, 32, 0x00ffffff, "[                    ]");
-					break;
-				}
-			case 0: {   // Enter was pressed
-					switch (g->old_selection) {
-						case 1: {
-								g->startScreen = 0;
-								g->current_selection = g->old_selection;
-								break;
-							}
-						case 2: {
-								//options...
-								g->current_selection = g->old_selection;
-								break;
-							}
-						case 3: {
-								//High Scores page...
-								g->current_selection = g->old_selection;
-								break;
-							}
-					}
-				}
-		}
-
-
-		if ((keys[XK_Down] || keys[XK_s]) && (g->current_selection < 3)) {
-			g->current_selection++;
-			keys[XK_Down] = 0;
-			keys[XK_s] = 0;
-		} else if ((keys[XK_Up] || keys[XK_w]) && (g->current_selection > 1)) {
-			g->current_selection--;
-			keys[XK_Up] = 0;
-			keys[XK_w] = 0;
-		} else if (keys[XK_Return] || keys[XK_space]) {
-			g->old_selection = g->current_selection;
-			g->current_selection = 0;
-		}
-	}
-
-	void rendergameoverScreen(Game *g)
-	{
-		Rect r;
-		glClear(GL_COLOR_BUFFER_BIT);
-		sscreen_background(gameoverTex, 1.0, 1.0, 1.0, 1.0);
-		//glClearColor(1.0, 1.0, 1.0, 1.0);
-		//
-		r.bot = yres*0.7;
-		r.left = xres*0.5;
-		r.center = 1;
-		ggprint12(&r, 32, 0x00ff00ff, "Your SCORE IS: %i, zone: %i, wave: %i", 
-				g->player1.score, g->zcnt, g->wcnt);
-		ggprint16(&r, 32, 0x00ff00ff, "Enter Name");
-	}
-
-	void renderscoreScreen(Game *g)
-	{
-		Rect r;
-		glClear(GL_COLOR_BUFFER_BIT);
-		glClearColor(1.0, 1.0, 1.0, 1.0);
-		//
-		r.bot = yres*0.7;
-		r.left = xres*0.5;
-		r.center = 1;
-		ggprint16(&r, 32, 0x00ff00ff, "GAME OVER");
-		ggprint12(&r, 24, 0x00ff00ff, "A Zombie Ate Your Brains");
-		ggprint12(&r, 32, 0x00ff00ff, "Your SCORE IS: %i", g->player1.score);
-		ggprint16(&r, 32, 0x00ff00ff, "Try Again");
-		ggprint16(&r, 32, 0x00ff00ff, "Exit");
-	}
-
-	void sscreen_background(GLuint tex, float r, float g, float b, float alph)
-	{
-
-		glClearColor(r, g, b, alph);
-		glClear(GL_COLOR_BUFFER_BIT);
-		//draw textured quad
-		//float wid = 120.0f;
-		glColor3f(1.0, 1.0, 1.0);
-		//glColor3f(1.0, 1.0, 1.0);
-		glBindTexture(GL_TEXTURE_2D, tex);
-		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
-		glTexCoord2f(0.0f, 0.0f); glVertex2i(0, yres);
-		glTexCoord2f(1.0f, 0.0f); glVertex2i(xres, yres);
-		glTexCoord2f(1.0f, 1.0f); glVertex2i(xres, 0);
-		glEnd();
+			}
 	}
 
 
-	/*int fib(int n)
-	  {
-	  if (n <= 1)
-	  return n;
-	  return fib (n-1) + fib(n-2);
-	  }
-	 */
+	if ((keys[XK_Down] || keys[XK_s]) && (g->current_selection < 3)) {
+		g->current_selection++;
+		keys[XK_Down] = 0;
+		keys[XK_s] = 0;
+	} else if ((keys[XK_Up] || keys[XK_w]) && (g->current_selection > 1)) {
+		g->current_selection--;
+		keys[XK_Up] = 0;
+		keys[XK_w] = 0;
+	} else if (keys[XK_Return] || keys[XK_space]) {
+		g->old_selection = g->current_selection;
+		g->current_selection = 0;
+	}
+}
+
+void rendergameoverScreen(Game *g)
+{
+	Rect r;
+	glClear(GL_COLOR_BUFFER_BIT);
+	sscreen_background(gameoverTex, 1.0, 1.0, 1.0, 1.0);
+	//glClearColor(1.0, 1.0, 1.0, 1.0);
+	//
+	r.bot = yres*0.7;
+	r.left = xres*0.5;
+	r.center = 1;
+	ggprint12(&r, 32, 0x00ff00ff, "Your SCORE IS: %i, zone: %i, wave: %i", 
+			g->player1.score, g->zcnt, g->wcnt);
+	ggprint16(&r, 32, 0x00ff00ff, "Enter Name");
+}
+
+void renderscoreScreen(Game *g)
+{
+	Rect r;
+	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	//
+	r.bot = yres*0.7;
+	r.left = xres*0.5;
+	r.center = 1;
+	ggprint16(&r, 32, 0x00ff00ff, "GAME OVER");
+	ggprint12(&r, 24, 0x00ff00ff, "A Zombie Ate Your Brains");
+	ggprint12(&r, 32, 0x00ff00ff, "Your SCORE IS: %i", g->player1.score);
+	ggprint16(&r, 32, 0x00ff00ff, "Try Again");
+	ggprint16(&r, 32, 0x00ff00ff, "Exit");
+}
+
+void sscreen_background(GLuint tex, float r, float g, float b, float alph)
+{
+
+	glClearColor(r, g, b, alph);
+	glClear(GL_COLOR_BUFFER_BIT);
+	//draw textured quad
+	//float wid = 120.0f;
+	glColor3f(1.0, 1.0, 1.0);
+	//glColor3f(1.0, 1.0, 1.0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+	glTexCoord2f(0.0f, 0.0f); glVertex2i(0, yres);
+	glTexCoord2f(1.0f, 0.0f); glVertex2i(xres, yres);
+	glTexCoord2f(1.0f, 1.0f); glVertex2i(xres, 0);
+	glEnd();
+}
+
+
+/*int fib(int n)
+  {
+  if (n <= 1)
+  return n;
+  return fib (n-1) + fib(n-2);
+  }
+ */
