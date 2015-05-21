@@ -14,5 +14,5 @@ extern void invulntime(Game *g);
 extern void updateInvuln(Game *g);
 extern void rftime(Game *g);
 extern void updateRF(Game *g);
-
+extern std::string keyCheck(Game *g);
 #endif

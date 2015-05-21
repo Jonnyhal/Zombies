@@ -46,6 +46,7 @@
 #include <ctime>
 #include <cmath>
 #include <X11/Xlib.h>
+#include <string>
 //#include <X11/Xutil.h>
 //#include <GL/gl.h>
 #include <GL/glu.h>
@@ -74,7 +75,8 @@ struct timespec timePause;
 double physicsCountdown=0.0;
 double timeSpan=0.0;
 int xres, yres;
-
+std::string name;
+std::string oldname;
 //X Windows variables
 Display *dpy;
 Window win;
@@ -1140,17 +1142,41 @@ void render_StartScreen(Game *g)
 
 void rendergameoverScreen(Game *g)
 {
+	//std::string tmp = keyCheck(g);
+	/*std::cout<<"oldname: " << oldname << "\n";
+	if (tmp == "^") {
+		name = oldname;
+	} else*/ 
+	if (name.length() < 32){
+		//oldname = name;
+		name += keyCheck(g);
+		std::cout<<"name: " << name <<"\n";
+	}
 	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);
 	sscreen_background(gameoverTex, 1.0, 1.0, 1.0, 1.0);
 	//glClearColor(1.0, 1.0, 1.0, 1.0);
 	//
-	r.bot = yres*0.7;
+	r.bot = yres*0.4;
 	r.left = xres*0.5;
 	r.center = 1;
-	ggprint12(&r, 32, 0x00ff00ff, "Your SCORE IS: %i, zone: %i, wave: %i", 
-			g->player1.score, g->zcnt, g->wcnt);
-	ggprint16(&r, 32, 0x00ff00ff, "Enter Name");
+	ggprint16(&r, 32, 0x00ff2200, "Your SCORE IS %i", g->player1.score);
+	ggprint16(&r, 32, 0x00ff2200, "You made it to wave %i in zone %i", g->zcnt, g->wcnt);
+	ggprint16(&r, 32, 0x00ff2200, "Enter Name:");
+	glColor3f(1.0, 1.0, 1.0);
+	glBegin(GL_QUADS);
+		glVertex2i(xres*0.46-2+g->spacing, yres*0.29);
+		glVertex2i(xres*0.46-2+g->spacing, yres*0.29+24.0);
+		glVertex2i(xres*0.46-2+18.0+g->spacing, yres*0.29+24.0);
+		glVertex2i(xres*0.46-2+18.0+g->spacing, yres*0.29);
+	glEnd();
+
+	if (name.length() != 0) {
+		r.center = 0;
+		r.left = xres*0.46-2;
+		ggprint16(&r, 32, 0x0011ff22, "%s", name.c_str());
+	}
+	//std::cout<<"length: " << name.length() << "\n";
 }
 
 void renderscoreScreen(Game *g)
