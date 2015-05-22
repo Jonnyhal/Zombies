@@ -34,6 +34,8 @@ extern void fire_weapon(Game *g)
 				timeCopy(&g->bulletTimer, &bt);
 				//shoot a bullet...
 				Bullet *b = new Bullet;
+				if(play_sounds == 1)
+				  fmod_playsound(2);
 				b->type = 1;
 				g->player1.oldbType = 1;
 				timeCopy(&b->time, &bt);

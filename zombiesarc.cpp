@@ -65,6 +65,12 @@ extern "C" {
 #include "loot.h"
 #include "bullets.h"
 #include "render.h"
+#define USE_SOUND
+#ifdef USE_SOUND
+#include <FMOD/wincompat.h>
+#include <FMOD/fmod.h>
+#include "fmod.h"
+#endif
 
 //Globals--
 Flt last_Position_S;
@@ -75,6 +81,11 @@ struct timespec timePause;
 double physicsCountdown=0.0;
 double timeSpan=0.0;
 int xres, yres;
+//play sounds
+#ifdef USE_SOUND
+int play_sounds = 0;
+#endif
+
 std::string name;
 std::string oldname;
 //X Windows variables
@@ -136,6 +147,7 @@ int main(void)
 	xres = 1250, yres = 900;
 	initXWindows();
 	init_opengl();
+	init_sounds();
 	Game game;
 	game.current_selection = 1;
 	//int donesscreen = 0;
@@ -172,6 +184,9 @@ int main(void)
 		glXSwapBuffers(dpy, win);
 
 	}
+	#ifdef USE_SOUND
+	fmod_cleanup();
+	#endif //use sound
 	cleanupXWindows();
 	cleanup_fonts();
 	logClose();
@@ -479,6 +494,27 @@ void check_resize(XEvent *e)
 	}
 }
 
+void init_sounds(void)
+{
+	#ifdef USE_SOUND
+	//FMOD_RESULT result;
+	if (fmod_init()) {
+		std::cout << "ERROR - fmod_init()\n" << std::endl;
+		return;
+	}
+	if (fmod_createsound((char *)"./sounds/tick.wav", 0)) {
+		std::cout << "ERROR - fmod_createsound()\n" << std::endl;
+		return;
+	}
+	if (fmod_createsound((char *)"./sounds/drip.wav", 1)) {
+		std::cout << "ERROR - fmod_createsound()\n" << std::endl;
+		return;
+	}
+	fmod_setmode(0,FMOD_LOOP_OFF);
+	//fmod_playsound(0);
+	//fmod_systemupdate();
+	#endif //USE_SOUND
+}
 
 void init(Game *g) {
 	// before calling, show intro text
@@ -919,12 +955,18 @@ void player_zomb_collision(Game *g)
 				//this player is hit.
 				if (!g->player1.invuln) {
 					g->player1.lives--;
+					#ifdef USE_SOUND
+					if (play_sounds == 1) {
+						fmod_playsound(2);
+					}
+					#endif //use sound
 					std::cout<<"lives remaining: " << g->player1.lives << "\n";
 					//ENRAGE THE ZOMBIE; HE'S HUNGRY FOR BLOOOOOOOOOD
 					z->color[0] = 1.0;
 					z->color[1] = 0.0;
 					z->color[2] = 0.1;
 					z->speed += 1.0;
+					//put sound here******
 					g->player1.multi = 1.0;
 					//if (g->player1.lives == 1) print warning
 					if (g->player1.lives < 1) {
@@ -1183,7 +1225,7 @@ void render_StartScreen(Game *g)
 	r.left = xres - xres*0.5;
 	r.center = 1;
 	ggprint16(&r, 32, 0x00ff00ff, "START GAME");
-	ggprint16(&r, 32, 0x00ff00ff, "OPTIONS");
+	ggprint16(&r, 32, 0x00ff00ff, "SOUND ");
 	ggprint16(&r, 32, 0x00ff00ff, "HIGH SCORES");
 	//...
 
@@ -1219,6 +1261,7 @@ void render_StartScreen(Game *g)
 					case 2: {
 							//options...
 							g->current_selection = g->old_selection;
+							play_sounds ^= 1;
 							break;
 						}
 					case 3: {
