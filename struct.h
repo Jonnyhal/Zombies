@@ -35,6 +35,7 @@ typedef float Vec[3];
 
 //Globals--
 extern int xres, yres;
+extern int keys[65536];
 //---------------------------------------------------------------------------n
 //Setup timers
 const double physicsRate = 1.0 / 60.0;
@@ -199,7 +200,8 @@ struct Game {
         int nbullets;
         int startScreen;
         int current_selection;
-        int old_selection;
+	int old_selection;
+	int spacing, oldspacing;
         struct timespec bulletTimer;
         struct timespec multiTimer;
 	Game() {
@@ -218,6 +220,8 @@ struct Game {
                 gameover = 0;
                 running = 1;
                 zombieSpawn = 9;
+		spacing = 0;
+		oldspacing = 0;
         }
 };
 

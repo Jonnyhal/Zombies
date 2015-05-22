@@ -11,7 +11,8 @@
 #include <stdlib.h>
 #include <iostream>
 #include <cmath>
-
+#include <string>
+#include <X11/keysym.h>
 extern "C"{
 	#include "struct.h"
 	#include "fonts.h"
@@ -611,6 +612,382 @@ extern void lootDraw(GLuint tex, Loot *l, float r, float g, float b, float alph)
 	glEnd();
 }
 
+
+/*==========================================================================================
+  ==========================================================================================
+					KEY STUFF
+  ==========================================================================================
+  ==========================================================================================*/
+extern std::string keyCheck(Game *g)
+{
+	int shift = 0;
+	int count = 0;
+	std::string name = "";
+	if (keys[XK_Shift_L] || keys[XK_Shift_R])
+		shift = 1;
+	if (keys[XK_Caps_Lock])
+		shift = 1;
+
+	if (keys[XK_q]) {
+		if (shift) {
+			name += "Q";
+			g->oldspacing = g->spacing;
+			g->spacing+=15;
+		} else {
+			name += "q";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_q] = 0;
+	}
+	if (keys[XK_w]) {
+		if (shift) {
+			name += "W";
+			g->oldspacing = g->spacing;
+			g->spacing+=22;
+		} else {
+			name += "w";
+			g->oldspacing = g->spacing;
+			g->spacing+=16;
+		}
+		count++;
+		keys[XK_w] = 0;
+	}
+	if (keys[XK_e]) {
+		if (shift) {
+			name += "E";
+			g->oldspacing = g->spacing;
+			g->spacing+=12;
+		} else {
+			name += "e";
+			g->oldspacing = g->spacing;
+			g->spacing+=11;
+		}
+		count++;
+		keys[XK_e] = 0;
+	}
+	if (keys[XK_r]) {
+		if (shift) {
+			name += "R";
+			g->oldspacing = g->spacing;
+			g->spacing+=12;
+		} else {
+			name += "r";
+			g->oldspacing = g->spacing;
+			g->spacing+=7;
+		}
+		count++;
+		keys[XK_r] = 0;
+	}
+	if (keys[XK_t]) {
+		if (shift) {
+			name += "T";
+			g->oldspacing = g->spacing;
+			g->spacing+=13;
+		} else {
+			name += "t";
+			g->oldspacing = g->spacing;
+			g->spacing+=6;
+		}
+		count++;
+		keys[XK_t] = 0;
+	}
+	if (keys[XK_y]) {
+		if (shift) {
+			name += "Y";
+			g->oldspacing = g->spacing;
+			g->spacing+=15;
+		} else {
+			name += "y";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_y] = 0;
+	}
+	if (keys[XK_u]) {
+		if (shift) {
+			name += "U";
+			g->oldspacing = g->spacing;
+			g->spacing+=13;
+		} else {
+			name += "u";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_u] = 0;
+	}
+	if (keys[XK_i]) {
+		if (shift) {
+			name += "I";
+			g->oldspacing = g->spacing;
+			g->spacing+=3;
+		}else {
+			name += "i";
+			g->oldspacing = g->spacing;
+			g->spacing+=3;
+		}
+		count++;
+		keys[XK_i] = 0;
+	}
+	if (keys[XK_o]) {
+		if (shift) {
+			name += "O";
+			g->oldspacing = g->spacing;
+			g->spacing+=15;
+		} else {
+			name += "o";
+			g->oldspacing = g->spacing;
+			g->spacing+=11;
+		}
+		count++;
+		keys[XK_o] = 0;
+	}
+	if (keys[XK_p]) {
+		if (shift) {
+			name += "P";
+			g->oldspacing = g->spacing;
+			g->spacing+=12;
+		} else {
+			name += "p";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_p] = 0;
+	}
+	if (keys[XK_a]) {
+		if (shift) {
+			name += "A";
+			g->oldspacing = g->spacing;
+			g->spacing+=14;
+		} else {
+			name += "a";
+			g->oldspacing = g->spacing;
+			g->spacing+=11;
+		}
+		count++;
+		keys[XK_a] = 0;
+	}
+	if (keys[XK_s]) {
+		if (shift) {
+			name += "S";
+			g->oldspacing = g->spacing;
+			g->spacing+=13;
+		} else {
+			name += "s";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_s] = 0;
+	}
+	if (keys[XK_d]) {
+		if (shift) {
+			name += "D";
+			g->oldspacing = g->spacing;
+			g->spacing+=13;
+		} else {
+			name += "d";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_d] = 0;
+	}
+	if (keys[XK_f]) {
+		if (shift) {
+			name += "F";
+			g->oldspacing = g->spacing;
+			g->spacing+=11;
+		} else {
+			name += "f";
+			g->oldspacing = g->spacing;
+			g->spacing+=8;
+		}
+		count++;
+		keys[XK_f] = 0;
+	}
+	if (keys[XK_g]) {
+		if (shift) {
+			name += "G";
+			g->oldspacing = g->spacing;
+			g->spacing+=15;
+		} else {
+			name += "g";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_g] = 0;
+	}
+	if (keys[XK_h]) {
+		if (shift) {
+			name += "H";
+			g->oldspacing = g->spacing;
+			g->spacing+=13;
+		} else {
+			name += "h";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_h] = 0;
+	}
+	if (keys[XK_j]) {
+		if (shift) {
+			name += "J";
+			g->oldspacing = g->spacing;
+			g->spacing+=9;
+		} else {
+			name += "j";
+			g->oldspacing = g->spacing;
+			g->spacing+=5;
+		}
+		count++;
+		keys[XK_j] = 0;
+	}
+	if (keys[XK_k]) {
+		if (shift) {
+			name += "K";
+			g->oldspacing = g->spacing;
+			g->spacing+=13;
+		} else {
+			name += "k";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_k] = 0;
+	}
+	if (keys[XK_l]) {
+		if (shift) {
+			name += "L";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		} else {
+			name += "l";
+			g->oldspacing = g->spacing;
+			g->spacing+=3;
+		}
+		count++;
+		keys[XK_l] = 0;
+	}
+	if (keys[XK_z]) {
+		if (shift) {
+			name += "Z";
+			g->oldspacing = g->spacing;
+			g->spacing+=13;
+		} else {
+			name += "z";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_z] = 0;
+	}
+	if (keys[XK_x]) {
+		if (shift) {
+			name += "X";
+			g->oldspacing = g->spacing;
+			g->spacing+=15;
+		} else {
+			name += "x";
+			g->oldspacing = g->spacing;
+			g->spacing+=11;
+		}
+		count++;
+		keys[XK_x] = 0;
+	}
+	if (keys[XK_c]) {
+		if (shift) {
+			name += "C";
+			g->oldspacing = g->spacing;
+			g->spacing+=14;
+		} else {
+			name += "c";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_c] = 0;
+	}
+	if (keys[XK_v]) {
+		if (shift) {
+			name += "V";
+			g->oldspacing = g->spacing;
+			g->spacing+=14;
+		} else {
+			name += "v";
+			g->oldspacing = g->spacing;
+			g->spacing+=12;
+		}
+		count++;
+		keys[XK_v] = 0;
+	}
+	if (keys[XK_b]) {
+		if (shift) {
+			name += "B";
+			g->oldspacing = g->spacing;
+			g->spacing+=12;
+		} else {
+			name += "b";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_b] = 0;
+	}
+	if (keys[XK_n]) {
+		if (shift) {
+			name += "N";
+			g->oldspacing = g->spacing;
+			g->spacing+=13;
+		} else {
+			name += "n";
+			g->oldspacing = g->spacing;
+			g->spacing+=10;
+		}
+		count++;
+		keys[XK_n] = 0;
+	}
+	if (keys[XK_m]) {
+		if (shift) {
+			name += "M";
+			g->oldspacing = g->spacing;
+			g->spacing+=16;
+		} else {
+			name += "m";
+			g->oldspacing = g->spacing;
+			g->spacing+=15;
+		}
+		count++;
+		keys[XK_m] = 0;
+	}
+	if (keys[XK_space]) {
+		name += " ";
+		g->oldspacing = g->spacing;
+		g->spacing+=7;
+		count++;
+		keys[XK_space] = 0;
+	}
+	/*if (keys[XK_BackSpace] || keys[XK_Delete]) {
+		name = "^";
+		g->spacing -= (g->spacing - g->oldspacing);
+		keys[XK_BackSpace] = 0;
+		keys[XK_Delete] = 0;
+	}*/
+	return name;
+}
+
+
+
+
+
+
+/*=====================================TIMERS====================================*/
 extern void multitime(Game *g)
 {
 	struct timespec mt;

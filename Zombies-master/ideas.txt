@@ -1,0 +1,17 @@
+Zombie game feature ideas
+
+Weapon types :
+--------------	Start with Pistol?
+Pistol
+Machine Gun
+Dual Pistols
+Dual MGs
+Rifle(sniperino)
+Minigun??
+
+Decisions:
+	1. Should the bullets stop at the cursor or continue to move past?
+	2. Bullet speed, length, collision detection: how close must the bullet be to the target
+	3. Would it be possible to implement grenades? Other explosives? Types of ammo?
+	4. Should there be an ammo capacity (ammo pickup, current ammo/ammo maximum)?
+	
