@@ -447,7 +447,74 @@ void init(Game *g) {
 	std::cout<<"zcnt: " << g->zcnt;
 	std::cout<<" wcnt: " << g->wcnt;
 
-	if (g->wcnt > 3) {
+	if (g->wcnt > 3 && (g->zcnt%4) == 1) {
+		Zone *z = new Zone;
+		z->wave = new Wave;
+		deleteZone(g,g->zhead);
+		g->zombieSpawn *= 2;
+		g->zhead = z;
+		g->zcnt++;
+		g->wcnt = 1;
+		char texname[] = "./images/map2.ppm";
+		g->zhead->zbackground = ppm6GetImage(texname);
+		glClearColor(1.0, 0.0, 0.0, 1.0);
+		//Do this to allow fonts
+		glEnable(GL_TEXTURE_2D);
+		initialize_fonts();
+
+		glGenTextures(1, &g->zhead->zTexture);
+		glBindTexture(GL_TEXTURE_2D, g->zhead->zTexture);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, 3,g->zhead->zbackground->width, 
+				g->zhead->zbackground->height,0, GL_RGB, GL_UNSIGNED_BYTE, 
+				g->zhead->zbackground->data);
+	} else if (g->wcnt > 3 && (g->zcnt%4) == 2) {
+		Zone *z = new Zone;
+		z->wave = new Wave;
+		deleteZone(g,g->zhead);
+		g->zombieSpawn *= 2;
+		g->zhead = z;
+		g->zcnt++;
+		g->wcnt = 1;
+		char texname[] = "./images/map3.ppm";
+		g->zhead->zbackground = ppm6GetImage(texname);
+		glClearColor(1.0, 0.0, 0.0, 1.0);
+		//Do this to allow fonts
+		glEnable(GL_TEXTURE_2D);
+		initialize_fonts();
+
+		glGenTextures(1, &g->zhead->zTexture);
+		glBindTexture(GL_TEXTURE_2D, g->zhead->zTexture);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, 3,g->zhead->zbackground->width, 
+				g->zhead->zbackground->height,0, GL_RGB, GL_UNSIGNED_BYTE, 
+				g->zhead->zbackground->data);
+
+	} else if (g->wcnt > 3 && (g->zcnt%4) == 3) {
+		Zone *z = new Zone;
+		z->wave = new Wave;
+		deleteZone(g,g->zhead);
+		g->zombieSpawn *= 2;
+		g->zhead = z;
+		g->zcnt++;
+		g->wcnt = 1;
+		char texname[] = "./images/map4.ppm";
+		g->zhead->zbackground = ppm6GetImage(texname);
+		glClearColor(1.0, 0.0, 0.0, 1.0);
+		//Do this to allow fonts
+		glEnable(GL_TEXTURE_2D);
+		initialize_fonts();
+
+		glGenTextures(1, &g->zhead->zTexture);
+		glBindTexture(GL_TEXTURE_2D, g->zhead->zTexture);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, 3,g->zhead->zbackground->width, 
+				g->zhead->zbackground->height,0, GL_RGB, GL_UNSIGNED_BYTE, 
+				g->zhead->zbackground->data);
+	} else if (g->wcnt > 3 && (g->zcnt%4) == 0) {
 		Zone *z = new Zone;
 		z->wave = new Wave;
 		deleteZone(g,g->zhead);
@@ -476,7 +543,7 @@ void init(Game *g) {
 		g->zhead = z;
 		g->zcnt = 1;
 		g->wcnt = 1;
-		char texname[] = "./images/tex2.ppm";
+		char texname[] = "./images/map1.ppm";
 		g->zhead->zbackground = ppm6GetImage(texname);
 		glClearColor(1.0, 0.0, 0.0, 1.0);
 		//Do this to allow fonts
@@ -607,7 +674,6 @@ void zMove(Game *g, Zombie *a)
 		angle = 90 - angle;
 		a->angle = angle;
 	}
-	//std::cout<<a->angle << "\n";
 }
 //====================================
 void normalize(Vec v) 
@@ -778,7 +844,7 @@ void buildZombieFragment(Zombie *ta, Zombie *a)
 	//std::cout << "frag" << std::endl;
 }
 
-void zomb_zomb_collision(Game *g, Zombie *a)
+void zomb_zomb_collision(Zombie *a)
 {
 	Zombie *c = a->next;
 	Flt z0, z1, zdist;
@@ -833,7 +899,6 @@ void player_zomb_collision(Game *g)
 						//to determine if zombie is wandering or running at player?
 						for (int j=0; j<g->nzombies; j++) {
 							int zcount = (j % 4);
-							std::cout << zcount << std::endl;
 							if (zcount == 0) {
 								//left
 								a->pos[0] = (Flt)(0);
@@ -919,7 +984,7 @@ void physics(Game *g)
 		//Try nesting everything in an if/else with a randomized bool
 		//to determine if zombie is wandering or running at player?
 		zMove(g, a);
-		zomb_zomb_collision(g, a);
+		zomb_zomb_collision(a);
 		a->pos[0] += a->vel[0];
 		a->pos[1] += a->vel[1];
 		//Check for collision with window edges
