@@ -1,12 +1,11 @@
 //sound functions
 #include <iostream>
-
-#define USE_SOUND
-#ifndef USE_SOUND 
-#include <FMOD/wncompat.h>
-#include "fmod.h"
-#endif
 #include "sounds.h"
+#define USE_SOUND
+#include <FMOD/fmod.h>
+#include <FMOD/wincompat.h>
+#include "fmod.h"
+
 using namespace std;
 
 extern void init_sounds(void)
@@ -29,8 +28,33 @@ extern void init_sounds(void)
 		cout << "ERROR - fmod_createsound()\n" << endl;
 		return;
 	}
+	if (fmod_createsound((char *)"./sounds/chainsaw_hedgemaze.mp3", 3)) {
+		cout << "ERROR - fmod_createsound()\n" << endl;
+		return;
+	}
+	if (fmod_createsound((char *)"./sounds/reload.wav", 4)) {
+		cout << "ERROR - fmod_createsound()\n" << endl;
+		return;
+	}
+	if (fmod_createsound((char *)"./sounds/m1_single.wav", 5)) {
+		cout << "ERROR - fmod_createsound()\n" << endl;
+		return;
+	}
+	if (fmod_createsound((char *)"./sounds/zomb1.wav", 6)) {
+		cout << "ERROR - fmod_createsound()\n" << endl;
+		return;
+	}
+	if (fmod_createsound((char *)"./sounds/impact.mp3", 7)) {
+		cout << "ERROR - fmod_createsound()\n" << endl;
+		return;
+	}
+	if (fmod_createsound((char *)"./sounds/zombmoan.wav", 8)) {
+		cout << "ERROR - fmod_createsound()\n" << endl;
+		return;
+	}
 	//if ((fmod_createsound((char *)"./sounds/
-	mod_setmode(0,FMOD_LOOP_OFF);
+	fmod_setmode(0,FMOD_LOOP_OFF);
+	fmod_setmode(3,FMOD_LOOP_NORMAL);
 	//fmod_playsound(0);
 	//fmod_systemupdate();
 	#endif //USE_SOUND

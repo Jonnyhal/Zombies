@@ -21,7 +21,7 @@ extern "C"{
 #include "loot.h"
 #include "bullets.h"
 #include "other.h"
-
+#include "fmod.h"
 extern void fire_weapon(Game *g)
 {
 	//a little time between each bullet
@@ -34,8 +34,7 @@ extern void fire_weapon(Game *g)
 				timeCopy(&g->bulletTimer, &bt);
 				//shoot a bullet...
 				Bullet *b = new Bullet;
-				if(play_sounds == 1)
-				  fmod_playsound(2);
+				fmod_playsound(5);
 				b->type = 1;
 				g->player1.oldbType = 1;
 				timeCopy(&b->time, &bt);
@@ -76,6 +75,7 @@ extern void fire_weapon(Game *g)
 				b->type = 1;
 				Bullet *c = new Bullet;
 				c->type = 2;
+				fmod_playsound(2);
 				g->player1.oldbType = 2;
 				timeCopy(&b->time, &bt);
 				timeCopy(&c->time, &bt);
@@ -145,6 +145,7 @@ extern void fire_weapon(Game *g)
 				c->type = 2;
 				Bullet *d = new Bullet;
 				d->type = 3;
+				fmod_playsound(2);
 				g->player1.oldbType = 3;
 				timeCopy(&b->time, &bt);
 				timeCopy(&c->time, &bt);
@@ -404,6 +405,7 @@ extern void bul_zomb_collision(Game *g, Bullet *x)
 						}
 					} else {*/
 				if(a->hitpoints == 0) {
+					//fmod_playsound(8);
 					g->player1.multi += 0.05;
 					g->player1.score += 75 * g->player1.multi;
 					multitime(g);
@@ -415,6 +417,7 @@ extern void bul_zomb_collision(Game *g, Bullet *x)
 					a = savea;
 					g->nzombies--;
 				} else {
+					//fmod_playsound(7);
 					a->hitpoints--;
 				}
 				//}
@@ -463,10 +466,12 @@ extern void powerUp(Game *g, Loot *l)
 		case 2:
 			//double shot
 			g->player1.bulletType = 2;
+			fmod_playsound(4);
 			break;
 		case 3: 
 			//triple shot
 			g->player1.bulletType = 3;
+			fmod_playsound(4);
 			break;
 		case 4:
 			//temp invuln
@@ -500,8 +505,8 @@ extern void lootDrop(Game *g, Zombie *a)
 	char texname1[] = "./images/tripleshot.ppm";
 	char texname2[] = "./images/nuke.ppm";
 	char texname3[] = "./images/lifeup.ppm";
-	char texname4[] = "./images/doubleshot.ppm";
-	char texname5[] = "./images/doubleshot.ppm";
+	char texname4[] = "./images/rapidfire.ppm";
+	char texname5[] = "./images/invuln.ppm";
 	//Load image files
 	// Create a random number from 1-100
 	int r1 = rand() % 100 + 1;

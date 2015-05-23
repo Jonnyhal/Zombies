@@ -65,13 +65,13 @@ extern "C" {
 #include "loot.h"
 #include "bullets.h"
 #include "render.h"
+#include "sounds.h"
 #define USE_SOUND
 #ifdef USE_SOUND
-#include <FMOD/wincompat.h>
 #include <FMOD/fmod.h>
+#include <FMOD/wincompat.h>
 #include "fmod.h"
-#endif
-
+#endif  //USE_SOUND
 //Globals--
 Flt last_Position_S;
 static int savex = 0;
@@ -129,7 +129,7 @@ void check_mouse(XEvent *e, Game *game);
 int check_keys(XEvent *e);
 void init(Game *g);
 void spawnZombies(Game *g);
-void init_sounds(void);
+//void init_sounds(void);
 void physics(Game *game);
 void player_Ang(Game *g);
 void render_StartScreen(Game *game);
@@ -154,6 +154,7 @@ int main(void)
 	//sscreen_background(&game);
 	//glClearColor(0.0, 0.0, 0.0, 1.0);
 	int done=0;
+	fmod_playsound(3);
 	while (game.running) {
 		while (XPending(dpy)) {
 			XEvent e;
@@ -178,10 +179,10 @@ int main(void)
 				break;
 			}
 		}
-		//if (game.gameover)
-		//	screen2(&game); 
-		render(&game);
-		glXSwapBuffers(dpy, win);
+		if (!game.gameover) {
+			render(&game);
+			glXSwapBuffers(dpy, win);
+		}
 
 	}
 	#ifdef USE_SOUND
@@ -241,7 +242,6 @@ void screen2(Game *game) //game over screen
 			XEvent e;
 			XNextEvent(dpy, &e);
 			check_resize(&e);
-			check_mouse(&e, game);
 			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
 				game->running = 0;
 				game->gameover = 0;
@@ -493,7 +493,7 @@ void check_resize(XEvent *e)
 		reshape_window(xce.width, xce.height);
 	}
 }
-
+/*
 void init_sounds(void)
 {
 	#ifdef USE_SOUND
@@ -502,19 +502,19 @@ void init_sounds(void)
 		std::cout << "ERROR - fmod_init()\n" << std::endl;
 		return;
 	}
-	if (fmod_createsound((char *)"./sounds/tick.wav", 0)) {
+	if (fmod_createsound((char *)"./sounds/Hit_Hurt.wav", 0)) {
 		std::cout << "ERROR - fmod_createsound()\n" << std::endl;
 		return;
 	}
-	if (fmod_createsound((char *)"./sounds/drip.wav", 1)) {
-		std::cout << "ERROR - fmod_createsound()\n" << std::endl;
-		return;
-	}
+//	if (fmod_createsound((char *)"./sounds/drip.wav", 1)) {
+//		std::cout << "ERROR - fmod_createsound()\n" << std::endl;
+//		return;
+//	}
 	fmod_setmode(0,FMOD_LOOP_OFF);
 	//fmod_playsound(0);
 	//fmod_systemupdate();
 	#endif //USE_SOUND
-}
+}*/
 
 void init(Game *g) {
 	// before calling, show intro text
@@ -955,11 +955,7 @@ void player_zomb_collision(Game *g)
 				//this player is hit.
 				if (!g->player1.invuln) {
 					g->player1.lives--;
-					#ifdef USE_SOUND
-					if (play_sounds == 1) {
-						fmod_playsound(2);
-					}
-					#endif //use sound
+					fmod_playsound(1);
 					std::cout<<"lives remaining: " << g->player1.lives << "\n";
 					//ENRAGE THE ZOMBIE; HE'S HUNGRY FOR BLOOOOOOOOOD
 					z->color[0] = 1.0;

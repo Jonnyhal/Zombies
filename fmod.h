@@ -2,7 +2,7 @@
 #define MY_FMOD_H
 
 #define NSOUNDS 3
-extern FMOD_CHANNEL *channel;
+//extern FMOD_CHANNEL *channel;
 extern int fmod_cleanup(void);
 extern int fmod_init(void);
 extern int fmod_createsound(char *fname, int i);

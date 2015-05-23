@@ -120,16 +120,46 @@ extern void render(Game *g)
         //glVertex2f(-10.0f, -10.0f);
         //glVertex2f(  0.0f, 20.0f);
         //glVertex2f( 10.0f, -10.0f);
-        glColor3f(1.0f, 0.0f, 0.0f);
-        glBegin(GL_POINTS);
-        glVertex2f(0.0f, 0.0f);
-        glEnd();
-        glPopMatrix();
+        //glColor3f(1.0f, 0.0f, 0.0f);
+        //glBegin(GL_POINTS);
+        //glVertex2f(0.0f, 0.0f);
+        //glEnd();
+        //glPopMatrix();
         if (g->player1.invuln) {
                 float col[3] = {0.0, 0.0, 0.0};
                 glColor3fv(col);
                 glPushMatrix();
-                glTranslatef(g->player1.pos[0], g->player1.pos[1], g->player1.pos[2]);
+		glTranslatef(g->player1.pos[0], g->player1.pos[1], g->player1.pos[2]);
+        	//float angle = atan2(player1.dir[1], player1.dir[0]);
+	        //std::cout<<"angle = " << g->player1.angle << std::endl;
+	        
+		if ( g->player1.bulletType == 2) {
+	        	glBindTexture(GL_TEXTURE_2D, silhouette_player_Texture_2);
+	        }
+	        else if ( g->player1.bulletType == 3) {
+	        	glBindTexture(GL_TEXTURE_2D, silhouette_player_Texture_3);
+	        }
+	        else {
+	        	glBindTexture(GL_TEXTURE_2D, silhouette_player_Texture);
+	        }	
+		
+	        glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
+	        glEnable(GL_ALPHA_TEST);
+	        glAlphaFunc(GL_GREATER, 0.0f);
+	        glColor4ub(0,0,0,255);
+	        glBegin(GL_QUADS);
+                //float w = g->player1.width;
+	                float w = 28.0f;
+	                glTexCoord2f(0.0f, 0.0f); glVertex2f(-w,  w);
+	                glTexCoord2f(1.0f, 0.0f); glVertex2f( w,  w);
+	                glTexCoord2f(1.0f, 1.0f); glVertex2f( w, -w);
+	                glTexCoord2f(0.0f, 1.0f); glVertex2f(-w, -w);
+	        glEnd();
+	        glPopMatrix();
+	        glBindTexture(GL_TEXTURE_2D, 0);
+	        glDisable(GL_ALPHA_TEST);
+
+                /*glTranslatef(g->player1.pos[0], g->player1.pos[1], g->player1.pos[2]);
                 glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
                 glBegin(GL_TRIANGLES);
                 glVertex2f(-12.0f, -10.0f);
@@ -143,7 +173,7 @@ extern void render(Game *g)
                 glBegin(GL_POINTS);
                 glVertex2f(0.0f, 0.0f);
                 glEnd();
-                glPopMatrix();
+                glPopMatrix();*/
                 //std::cout<< "blinking!" << "\n";
         }
 
