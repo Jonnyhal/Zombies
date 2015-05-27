@@ -529,7 +529,8 @@ void init(Game *g) {
 		Zone *z = new Zone;
 		z->wave = new Wave;
 		deleteZone(g,g->zhead);
-		g->zombieSpawn *= 2;
+		if (g->zombieSpawn < 100)
+	    	    g->zombieSpawn *= 2;
 		g->zhead = z;
 		g->zcnt++;
 		g->wcnt = 1;
@@ -551,7 +552,8 @@ void init(Game *g) {
 		Zone *z = new Zone;
 		z->wave = new Wave;
 		deleteZone(g,g->zhead);
-		g->zombieSpawn *= 2;
+		if (g->zombieSpawn < 100)
+			g->zombieSpawn *= 2;
 		g->zhead = z;
 		g->zcnt++;
 		g->wcnt = 1;
@@ -574,7 +576,8 @@ void init(Game *g) {
 		Zone *z = new Zone;
 		z->wave = new Wave;
 		deleteZone(g,g->zhead);
-		g->zombieSpawn *= 2;
+		if (g->zombieSpawn < 100)
+			g->zombieSpawn *= 2;
 		g->zhead = z;
 		g->zcnt++;
 		g->wcnt = 1;
@@ -596,7 +599,8 @@ void init(Game *g) {
 		Zone *z = new Zone;
 		z->wave = new Wave;
 		deleteZone(g,g->zhead);
-		g->zombieSpawn *= 2;
+		if (g->zombieSpawn < 100)
+			g->zombieSpawn *= 2;
 		g->zhead = z;
 		g->zcnt++;
 		g->wcnt = 1;
