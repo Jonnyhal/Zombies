@@ -249,9 +249,9 @@ extern void render(Game *g)
         //-------------------------------------------------------------------------
         //Draw the bullets
                 //std::cout<<"player posxy: " << g->player1.pos[0] << ", " << g->player1.pos[1] << ", " << g->player1.pos[2] << "\n";
-        bulletDraw(g->bhead, g);
-        bulletDraw(g->chead, g);
-        bulletDraw(g->dhead, g);
+        bulletDraw(g->bhead);
+        bulletDraw(g->chead);
+        bulletDraw(g->dhead);
         //Draw Loot
         //sscreen_background(g->zhead->zTexture, 1.0, 1.0, 1.0, 1.0);
 }

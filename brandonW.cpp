@@ -237,7 +237,7 @@ extern void fire_weapon(Game *g)
 	}
 }
 
-extern void bulletDraw(Bullet *b, Game *g)
+extern void bulletDraw(Bullet *b)
 {
 	while (b) {
 		//Log("draw bullet...\n");
