@@ -42,6 +42,14 @@ const double physicsRate = 1.0 / 60.0;
 const double oobillion = 1.0 / 1e9;
 //unsigned int upause=0;
 //-----------------------------------------------------------------------------
+struct Mouse{
+	Vec pos;
+        Ppmimage *mousebg;
+	Mouse() {
+	    pos[0] = 0;
+	    pos[1] = 1;
+	}
+};
 
 struct Player{
         Vec dir;
