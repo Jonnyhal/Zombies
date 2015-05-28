@@ -103,8 +103,9 @@ Ppmimage *player1RED = NULL;
 Ppmimage *player1BLU = NULL;
 Ppmimage *zombie0 = NULL;
 Ppmimage *blackicon = NULL;
-
+Ppmimage *mouse = NULL;
 //
+GLuint mouseTex;
 GLuint bgTexture0;
 GLuint gameoverTex;
 GLuint player1Tex;
@@ -116,6 +117,7 @@ GLuint silhouetteTexture;
 GLuint silhouette_player_Texture;
 GLuint silhouette_player_Texture_2;
 GLuint silhouette_player_Texture_3;
+GLuint silhouette_mouse_Texture;
 
 int keys[65536];
 
@@ -391,6 +393,8 @@ void init_opengl(void)
 	char tempname4[] = "./images/blackico.ppm";
 	char tempname5[] = "./images/soldierRED.ppm";
 	char tempname6[] = "./images/soldierBLU.ppm";
+	char tempname7[] = "./images/mouse.ppm";
+
 	//Load image files
 	background0 = ppm6GetImage(tempname);
 	gameover0   = ppm6GetImage(tempname1);
@@ -399,6 +403,8 @@ void init_opengl(void)
 	blackicon   = ppm6GetImage(tempname4);
 	player1RED  = ppm6GetImage(tempname5);
 	player1BLU  = ppm6GetImage(tempname6);
+	mouse	    = ppm6GetImage(tempname7);
+
 	//Generate Textures
 	glGenTextures(1, &bgTexture0);
 	init_textures(background0, bgTexture0);
@@ -467,6 +473,21 @@ void init_opengl(void)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, 
 			GL_RGBA, GL_UNSIGNED_BYTE, silhouetteData);
 	delete [] silhouetteData;
+	
+	//MouseTexture
+	int mw = 3;
+	int mh = 3;
+	glGenTextures(1, &mouseTex);
+	init_textures(mouse, mouseTex);
+        glGenTextures(1, &silhouette_mouse_Texture);
+	//silhoutte
+	glBindTexture(GL_TEXTURE_2D, silhouette_mouse_Texture);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	unsigned char *silhouetteDataMouse = buildAlphaData(mouse);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mw, mh, 0, 
+			GL_RGBA, GL_UNSIGNED_BYTE, silhouetteDataMouse);
+	delete [] silhouetteDataMouse;
 }
 
 void init_textures(Ppmimage *image, GLuint tex)

@@ -84,7 +84,13 @@ extern void render(Game *g)
         ggprint8b(&r, 16, 0x00ff1111, "n bullets: %i", g->nbullets);
         ggprint8b(&r, 16, 0x00ff1111, "Zombies left: %i", g->nzombies);
         //-------------------------------------------------------------------------
-        //Draw the player1
+	//Draw the crosshair
+	glPushMatrix();
+	glTranslatef(g->cross->pos[0], g->cross->pos[1], g->cross->pos[2]);	
+        glBindTexture(GL_TEXTURE_2D, silhouette_mouse_Texture);
+	glEnd();
+	glPopMatrix();
+	//Draw the player1
         glColor3fv(g->player1.color);
         glPushMatrix();
         glTranslatef(g->player1.pos[0], g->player1.pos[1], g->player1.pos[2]);

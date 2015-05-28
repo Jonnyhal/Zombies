@@ -10,6 +10,7 @@ extern GLuint silhouetteTexture;
 extern GLuint silhouette_player_Texture;
 extern GLuint silhouette_player_Texture_2;
 extern GLuint silhouette_player_Texture_3;
+extern GLuint silhouette_mouse_Texture;
 
 extern void render(Game *game);
 

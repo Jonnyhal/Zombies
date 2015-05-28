@@ -197,7 +197,8 @@ struct Game {
         Bullet *chead;
         Bullet *dhead;
         Zone *zhead;//zone, not zombie
-        Loot *lhead;
+        Mouse *cross;
+	Loot *lhead;
         int gameover;
         int running;
         int lootcnt;
