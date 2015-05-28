@@ -142,6 +142,7 @@ int fib(int n);
 void zMove(Game *g);
 void screen1(Game *game);
 void screen2(Game *game);
+void screen3(Game *game);
 
 int main(void)
 {
@@ -184,6 +185,11 @@ int main(void)
 		if (!game.gameover) {
 			render(&game);
 			glXSwapBuffers(dpy, win);
+		}
+		if (game.scoreScreen==1) {
+			std::cout<<"calling screen 3\n";
+			screen3(&game); 
+			break;
 		}
 
 	}
@@ -249,10 +255,34 @@ void screen2(Game *game) //game over screen
 				game->gameover = 0;
 			}
 		}
+		if(game->scoreScreen == 1) {
+			game->gameover = 0;
+			std::cout<<"setting gameover to 0\n";
+		}
 		rendergameoverScreen(game);
 		glXSwapBuffers(dpy, win);
 	}
 	game->gameover = 0;
+}
+
+void screen3(Game *game) //score screen
+{
+	//std::cout<<"made it here\n";
+	int donesscreen = 0;
+	while (game->scoreScreen) {
+		while (XPending(dpy)) {
+			XEvent e;
+			XNextEvent(dpy, &e);
+			check_resize(&e);
+			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
+				game->running = 0;
+				game->scoreScreen = 0;
+			}
+		}
+		renderscoreScreen(game);
+		glXSwapBuffers(dpy, win);
+	}
+	game->scoreScreen = 0;
 }
 
 void cleanupXWindows(void)
@@ -1316,9 +1346,15 @@ void rendergameoverScreen(Game *g)
 	if (tmp == "^") {
 		name = oldname;
 	} else*/ 
-	if (name.length() < 32){
+	std::string here = keyCheck(g);
+	if (here == "~") {
+		g->scoreScreen=1;
+		std::cout<<"exitting to score screen\n";
+		return;
+	}
+	if (name.length() < 32) {
 		//oldname = name;
-		name += keyCheck(g);
+		name += here;
 		std::cout<<"name: " << name <<"\n";
 	}
 	Rect r;
@@ -1353,6 +1389,7 @@ void renderscoreScreen(Game *g)
 	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClearColor(1.0, 1.0, 1.0, 1.0);
+	sscreen_background(bgTexture0, 1.0, 1.0, 1.0, 1.0);
 	//
 	r.bot = yres*0.7;
 	r.left = xres*0.5;

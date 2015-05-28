@@ -64,9 +64,11 @@ extern void render(Game *g)
                                 lootDraw(l->lootTex, l ,1.0, 1.0, 1.0, 1.0);
  			else if(ts > 4.80 && ts < 5.00)
                                 lootDraw(l->lootTex, l ,1.0, 1.0, 1.0, 1.0);
-                } else if (ts > 5 || l->type == 0) {
-                        //time to delete loot
-                        deleteLoot(g,l);
+                 	else if (ts > 5.00 || l->type == 0) {
+                        	//time to delete loot
+                        	deleteLoot(g,l);
+				std::cout<<"deleteloot() is called\n";
+			}
                 } else {
                         lootDraw(l->lootTex, l ,1.0, 1.0, 1.0, 1.0);
                 }
