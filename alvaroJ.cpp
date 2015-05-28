@@ -90,6 +90,14 @@ extern void render(Game *g)
 	glPushMatrix();
 	glTranslatef(g->cross->pos[0], g->cross->pos[1], g->cross->pos[2]);	
         glBindTexture(GL_TEXTURE_2D, silhouette_mouse_Texture);
+        glColor4ub(255,255,255,255);
+	glBegin(GL_QUADS);
+		float m = 3.0f;
+                glTexCoord2f(0.0f, 0.0f); glVertex2f(-m,  m);
+                glTexCoord2f(1.0f, 0.0f); glVertex2f( m,  m);
+                glTexCoord2f(1.0f, 1.0f); glVertex2f( m, -m);
+                glTexCoord2f(0.0f, 1.0f); glVertex2f(-m, -m);
+
 	glEnd();
 	glPopMatrix();
 	//Draw the player1

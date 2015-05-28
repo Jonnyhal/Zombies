@@ -902,6 +902,11 @@ void check_mouse(XEvent *e, Game *g)
 		//Mouse moved
 		savex = e->xbutton.x;
 		savey = e->xbutton.y;
+		if(g->cross->flag == 0) {
+		    g->cross->pos[0] = e->xbutton.x;
+		    g->cross->pos[1] = e->xbutton.y;
+		}
+
 		//player_Ang(g->player1.pos[0], g->player1.pos[1], savex, savey, g);
 		/*	if (g->bhead != NULL)
 			g->bhead->angle = bulletAng(g->bhead->pos[0], g->bhead->pos[1], savex, savey);

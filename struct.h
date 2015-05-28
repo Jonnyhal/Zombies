@@ -45,9 +45,12 @@ const double oobillion = 1.0 / 1e9;
 struct Mouse{
 	Vec pos;
         Ppmimage *mousebg;
+	int flag;
 	Mouse() {
-	    pos[0] = 0;
-	    pos[1] = 1;
+	    pos[0] = xres/2;
+	    pos[1] = yres/2;
+	    pos[2] = 0.0f;
+	    flag = 0;
 	}
 };
 
