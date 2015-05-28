@@ -449,6 +449,7 @@ extern void player_loot_collision(Game *g, Loot *l)
 		std::cout<<"loot collision!\n";
 		powerUp(g, l);
 		deleteLoot(g, l);
+		std::cout<<"deleteLoot called\n";
 	}
 }
 
@@ -979,6 +980,11 @@ extern std::string keyCheck(Game *g)
 		g->spacing+=7;
 		count++;
 		keys[XK_space] = 0;
+	}
+	if (keys[XK_Return]) {
+		std::string x = "~";
+		keys[XK_Return] = 0;
+		return x;
 	}
 	/*if (keys[XK_BackSpace] || keys[XK_Delete]) {
 		name = "^";

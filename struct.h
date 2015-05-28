@@ -198,7 +198,7 @@ struct Game {
         int zombieSpawn;
         int nzombies;
         int nbullets;
-        int startScreen;
+        int startScreen, scoreScreen;
         int current_selection;
 	int old_selection;
 	int spacing, oldspacing;
@@ -217,6 +217,7 @@ struct Game {
                 nzombies = 0;
                 nbullets = 0;
                 startScreen = 1;
+		scoreScreen = 0;
                 gameover = 0;
                 running = 1;
                 zombieSpawn = 9;
