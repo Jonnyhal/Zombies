@@ -85,14 +85,20 @@ extern void render(Game *g)
         ggprint8b(&r, 16, 0x00ff1111, "Zone %i, Wave %i", g->zcnt, g->wcnt);
         ggprint8b(&r, 16, 0x00ff1111, "n bullets: %i", g->nbullets);
         ggprint8b(&r, 16, 0x00ff1111, "Zombies left: %i", g->nzombies);
-        //-------------------------------------------------------------------------
-	//Draw the crosshair
+        ggprint8b(&r, 16, 0x00ff1111, "Lives: %i", g->player1.lives);
+	//-------------------------------------------------------------------------
+	//Draw the crosshair================
+	//glColor3fv(g->cross->color);
 	glPushMatrix();
 	glTranslatef(g->cross->pos[0], g->cross->pos[1], g->cross->pos[2]);	
         glBindTexture(GL_TEXTURE_2D, silhouette_mouse_Texture);
-        glColor4ub(255,255,255,255);
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER, 0.0f);
+	
+	glColor4ub(255,255,255,255);
+
 	glBegin(GL_QUADS);
-		float m = 3.0f;
+		float m = 20.0f;
                 glTexCoord2f(0.0f, 0.0f); glVertex2f(-m,  m);
                 glTexCoord2f(1.0f, 0.0f); glVertex2f( m,  m);
                 glTexCoord2f(1.0f, 1.0f); glVertex2f( m, -m);
@@ -100,6 +106,9 @@ extern void render(Game *g)
 
 	glEnd();
 	glPopMatrix();
+	glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_ALPHA_TEST);
+	//===================================
 	//Draw the player1
         glColor3fv(g->player1.color);
         glPushMatrix();

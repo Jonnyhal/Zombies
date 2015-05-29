@@ -46,11 +46,15 @@ struct Mouse{
 	Vec pos;
         Ppmimage *mousebg;
 	int flag;
+	float color[3];
 	Mouse() {
-	    pos[0] = xres/2;
-	    pos[1] = yres/2;
+	    pos[0] = 0;
+	    pos[1] = -0;
 	    pos[2] = 0.0f;
 	    flag = 0;
+	    color[0] = 1.0;
+	    color[1] = 1.0;
+	    color[2] = 1.0;
 	}
 };
 

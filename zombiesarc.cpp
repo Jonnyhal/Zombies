@@ -491,10 +491,7 @@ void init_opengl(void)
 	int h = zombie0->height;
 	glGenTextures(1, &zombieTex);
 	init_textures(zombie0, zombieTex);
-	glGenTextures(1, &blackiconTex);
-	init_textures(blackicon, blackiconTex);
 	glGenTextures(1, &silhouetteTexture);
-	init_textures(blackicon, blackiconTex);
 	//silhoutte
 	glBindTexture(GL_TEXTURE_2D, silhouetteTexture);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
@@ -505,8 +502,8 @@ void init_opengl(void)
 	delete [] silhouetteData;
 	
 	//MouseTexture
-	int mw = 3;
-	int mh = 3;
+	int mw = 138;
+	int mh = 138;
 	glGenTextures(1, &mouseTex);
 	init_textures(mouse, mouseTex);
         glGenTextures(1, &silhouette_mouse_Texture);
@@ -638,10 +635,8 @@ void check_mouse(XEvent *e, Game *g)
 		//Mouse moved
 		savex = e->xbutton.x;
 		savey = e->xbutton.y;
-		if(g->cross->flag == 0) {
-		    g->cross->pos[0] = e->xbutton.x;
-		    g->cross->pos[1] = e->xbutton.y;
-		}
+		g->cross->pos[0] = savex;
+		g->cross->pos[1] = savey;
 
 		//player_Ang(g->player1.pos[0], g->player1.pos[1], savex, savey, g);
 		/*	if (g->bhead != NULL)
