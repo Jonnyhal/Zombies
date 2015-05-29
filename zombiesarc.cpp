@@ -636,7 +636,7 @@ void check_mouse(XEvent *e, Game *g)
 		savex = e->xbutton.x;
 		savey = e->xbutton.y;
 		g->cross->pos[0] = savex;
-		g->cross->pos[1] = savey;
+		g->cross->pos[1] = yres-savey;
 
 		//player_Ang(g->player1.pos[0], g->player1.pos[1], savex, savey, g);
 		/*	if (g->bhead != NULL)
