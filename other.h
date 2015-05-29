@@ -12,5 +12,9 @@ double timeDiff(struct timespec *start, struct timespec *end);
 void init_opengl(void);
 void init(Game *g);
 void sscreen_background(GLuint tex, float r, float g, float b, float alph);
+void spawnZombies(Game *g);
+void zMove(Game *g, Zombie *a);
+void buildZombieFragment(Zombie *ta, Zombie *a);
+void zomb_zomb_collision(Zombie *a);
 
 #endif

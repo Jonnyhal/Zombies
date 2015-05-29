@@ -4,11 +4,16 @@
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
+#include <string>
 
 extern "C"{
 	#include "struct.h"
-	#include "defs.h"
+	#include "fonts.h"
 }
+#include "other.h"
+#include "delete.h"
+#include "fmod.h"
+
 extern void init(Game *g) {
 	std::cout<<"zcnt: " << g->zcnt;
         std::cout<<" wcnt: " << g->wcnt;
@@ -97,7 +102,7 @@ extern void init(Game *g) {
                 glClearColor(1.0, 0.0, 0.0, 1.0);
                 //Do this to allow fonts
 		
-		Zombieble(GL_TEXTURE_2D);
+		glEnable(GL_TEXTURE_2D);
                 initialize_fonts();
 
                 glGenTextures(1, &g->zhead->zTexture);
@@ -137,6 +142,7 @@ extern void init(Game *g) {
         }
         spawnZombies(g);
 }
+
 extern void spawnZombies(Game *g)
 {
         std::cout<<"\nwcnt in spawnZombies: " << g->wcnt << "\n";
@@ -273,7 +279,7 @@ extern void buildZombieFragment(Zombie *ta, Zombie *a)
         //std::cout << "frag" << std::endl;
 }
 
-void zomb_zomb_collision(Zombie *a)
+extern void zomb_zomb_collision(Zombie *a)
 {
         Zombie *c = a->next;
         Flt z0, z1, zdist;
