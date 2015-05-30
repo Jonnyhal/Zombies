@@ -75,7 +75,7 @@ extern void fire_weapon(Game *g)
 				b->type = 1;
 				Bullet *c = new Bullet;
 				c->type = 2;
-				fmod_playsound(2);
+				fmod_playsound(9);
 				g->player1.oldbType = 2;
 				timeCopy(&b->time, &bt);
 				timeCopy(&c->time, &bt);

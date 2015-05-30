@@ -24,7 +24,7 @@ extern void init_sounds(void)
 		cout << "ERROR - fmod_createsound()\n" << endl;
 		return;
 	}
-	if (fmod_createsound((char *)"./sounds/Laser_Shoot.wav", 2)) {
+	if (fmod_createsound((char *)"./sounds/gun3.wav", 2)) {
 		cout << "ERROR - fmod_createsound()\n" << endl;
 		return;
 	}
@@ -49,6 +49,10 @@ extern void init_sounds(void)
 		return;
 	}
 	if (fmod_createsound((char *)"./sounds/zombmoan.wav", 8)) {
+		cout << "ERROR - fmod_createsound()\n" << endl;
+		return;
+	}
+	if (fmod_createsound((char *)"./sounds/gun2.wav", 9)) {
 		cout << "ERROR - fmod_createsound()\n" << endl;
 		return;
 	}
