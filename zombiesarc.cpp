@@ -143,6 +143,7 @@ void zMove(Game *g);
 void screen1(Game *game);
 void screen2(Game *game);
 void screen3(Game *game);
+void show_mouse_cursor(const int onoff);
 
 int main(void)
 {
@@ -200,6 +201,31 @@ int main(void)
 	cleanup_fonts();
 	logClose();
 	return 0;
+}
+
+void show_mouse_cursor(const int onoff)
+{
+    if (onoff) {
+        //this removes our own blank cursor.
+        XUndefineCursor(dpy, win);
+        return;
+    }
+    //vars to make blank cursor
+    Pixmap blank;
+    XColor dummy;
+    char data[1] = {0};
+    Cursor cursor;
+    //make a blank cursor
+    blank = XCreateBitmapFromData (dpy, win, data, 1, 1);
+    if (blank == None)
+		std::cout << "error: out of memory." << std::endl;
+    cursor = XCreatePixmapCursor(dpy, blank, blank, &dummy, &dummy, 0, 0);
+    XFreePixmap(dpy, blank);
+    //this makes you the cursor. then set it using this function
+    XDefineCursor(dpy, win, cursor);
+    //after you do not need the cursor anymore use this function.
+    //it will undo the last change done by XDefineCursor
+    //(thus do only use ONCE XDefineCursor and then XUndefineCursor):
 }
 
 double timeDiff(struct timespec *start, struct timespec *end) {
@@ -341,6 +367,7 @@ void initXWindows(void)
 	cref += 200;
 	XSetForeground(dpy, gc, cref);
 	memset(keys, 0, 65536);
+	show_mouse_cursor(0);
 }
 
 void reshape_window(int width, int height)

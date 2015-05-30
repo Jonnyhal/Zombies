@@ -5,6 +5,8 @@
 #include <string.h>
 #include <ctime>
 #include <GL/glu.h>
+#include <X11/keysym.h>
+#include <X11/Xlib.h>
 
 extern "C" {
 	#include "ppm.h"
@@ -31,7 +33,6 @@ const float gravity = -0.2f;
 
 typedef float Flt;
 typedef float Vec[3];
-
 
 //Globals--
 extern int xres, yres;

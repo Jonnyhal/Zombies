@@ -98,7 +98,7 @@ extern void render(Game *g)
 	glColor4ub(255,255,255,255);
 
 	glBegin(GL_QUADS);
-		float m = 20.0f;
+		float m = 27.0f;
                 glTexCoord2f(0.0f, 0.0f); glVertex2f(-m,  m);
                 glTexCoord2f(1.0f, 0.0f); glVertex2f( m,  m);
                 glTexCoord2f(1.0f, 1.0f); glVertex2f( m, -m);
