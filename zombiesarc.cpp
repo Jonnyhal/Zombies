@@ -17,18 +17,18 @@
 // Start screen with menu selection   [X]
 // Keyboard + mouse = move + aim      [X] finished in first gitpush
 // Strafe/ Diagonal movement          [X] finished in first gitpush
-// At least four weapon types         []
+// At least four weapon types         [/]
 // Zombie spawn/movement algorithm    [X]
 // Score counter ingame               [X] -- 
-// Score record keeping               [] -- Should we keep the file online or local?
-// collision detection zombie->player [] -- insta-kill when touched? or health value?
-// Zombie Textures                    [] --
-// Player Textures                    [] -- how many textures to create walk cycle?
+// Score record keeping               [X] -- Should we keep the file online or local?
+// collision detection zombie->player [X] -- insta-kill when touched? or health value?
+// Zombie Textures                    [X] --
+// Player Textures                    [X] -- how many textures to create walk cycle?
 // Blood and Death textures for P+Z   [] -- different death textures, or only one?
-// BACKGROUND                         [/] -- single texture or multi? possibly 3d?
-// Grid to store "rooms"              [] -- how many "rooms"? Room design? difficulty?
-// SOUND                              [] -- Yeah... there is a lot of stuff here...
-// Zombie/Player health values        []
+// BACKGROUND                         [X] -- single texture or multi? possibly 3d?
+// Grid to store "rooms"              [---] -- how many "rooms"? Room design? difficulty?
+// SOUND                              [X] -- Yeah... there is a lot of stuff here...
+// Zombie/Player health values        [X]
 // Pause Screen                       [/] -- I think this would be a good idea to add ~bware
 //
 // Possible Additions
@@ -165,7 +165,7 @@ int main(void)
 	//sscreen_background(&game);
 	//glClearColor(0.0, 0.0, 0.0, 1.0);
 	int done=0;
-	fmod_playsound(3);
+	fmod_playsound(3,1.0);
 	while (game.running) {
 		while (XPending(dpy)) {
 			XEvent e;
@@ -802,7 +802,7 @@ void player_zomb_collision(Game *g)
 				//this player is hit.
 				if (!g->player1.invuln) {
 					g->player1.lives--;
-					fmod_playsound(1);
+					fmod_playsound(1,1.0);
 					std::cout<<"lives remaining: " << g->player1.lives << "\n";
 					//ENRAGE THE ZOMBIE; HE'S HUNGRY FOR BLOOOOOOOOOD
 					z->color[0] = 1.0;

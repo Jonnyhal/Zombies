@@ -34,7 +34,7 @@ extern void fire_weapon(Game *g)
 				timeCopy(&g->bulletTimer, &bt);
 				//shoot a bullet...
 				Bullet *b = new Bullet;
-				fmod_playsound(5);
+				fmod_playsound(5,0.35);
 				b->type = 1;
 				g->player1.oldbType = 1;
 				timeCopy(&b->time, &bt);
@@ -75,7 +75,7 @@ extern void fire_weapon(Game *g)
 				b->type = 1;
 				Bullet *c = new Bullet;
 				c->type = 2;
-				fmod_playsound(9);
+				fmod_playsound(9,0.3);
 				g->player1.oldbType = 2;
 				timeCopy(&b->time, &bt);
 				timeCopy(&c->time, &bt);
@@ -145,7 +145,7 @@ extern void fire_weapon(Game *g)
 				c->type = 2;
 				Bullet *d = new Bullet;
 				d->type = 3;
-				fmod_playsound(2);
+				fmod_playsound(2, 0.2);
 				g->player1.oldbType = 3;
 				timeCopy(&b->time, &bt);
 				timeCopy(&c->time, &bt);
@@ -467,12 +467,12 @@ extern void powerUp(Game *g, Loot *l)
 		case 2:
 			//double shot
 			g->player1.bulletType = 2;
-			fmod_playsound(4);
+			fmod_playsound(4,1.0);
 			break;
 		case 3: 
 			//triple shot
 			g->player1.bulletType = 3;
-			fmod_playsound(4);
+			fmod_playsound(4,1.0);
 			break;
 		case 4:
 			//temp invuln
