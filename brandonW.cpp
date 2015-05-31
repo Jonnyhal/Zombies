@@ -1038,7 +1038,7 @@ extern void updateInvuln(Game *g)
 	struct timespec bt;
 	clock_gettime(CLOCK_REALTIME, &bt);
 	double ts = timeDiff(&g->player1.invulnTimer, &bt);
-	if (ts > 10) {
+	if (ts > 5) {
 		//turn off invuln
 		g->player1.tempinvuln = 0;
 		g->player1.invuln = 0;

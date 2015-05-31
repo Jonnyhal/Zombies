@@ -47,6 +47,8 @@
 #include <cmath>
 #include <X11/Xlib.h>
 #include <string>
+#include <fstream>
+#include <sstream>
 //#include <X11/Xutil.h>
 //#include <GL/gl.h>
 #include <GL/glu.h>
@@ -81,6 +83,8 @@ struct timespec timePause;
 double physicsCountdown=0.0;
 double timeSpan=0.0;
 int xres, yres;
+std::string *names;
+int line_count = 0;
 //play sounds
 #ifdef USE_SOUND
 int play_sounds = 0;
@@ -144,6 +148,8 @@ void screen1(Game *game);
 void screen2(Game *game);
 void screen3(Game *game);
 void show_mouse_cursor(const int onoff);
+void reset_player(Game *g);
+void organize_scores();
 
 int main(void)
 {
@@ -154,6 +160,7 @@ int main(void)
 	init_sounds();
 	Game game;
 	game.current_selection = 1;
+	game.start = 0;
 	//int donesscreen = 0;
 	//sscreen_background(&game);
 	//glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -168,29 +175,35 @@ int main(void)
 			done = check_keys(&e);
 			if (done)
 				game.running = 0;
-			if (game.startScreen)
-				screen1(&game);
+		}
+		if (game.startScreen) {
+			std::cout<<"names: " << names << "\n";
+			screen1(&game);
 		}
 		clock_gettime(CLOCK_REALTIME, &timeCurrent);
 		timeSpan = timeDiff(&timeStart, &timeCurrent);
 		timeCopy(&timeStart, &timeCurrent);
 		physicsCountdown += timeSpan;
-		while (physicsCountdown >= physicsRate) {
+		while (physicsCountdown >= physicsRate && game.start && !game.gameover) {
 			physics(&game);
 			physicsCountdown -= physicsRate;
 			if (game.gameover) {
 				screen2(&game); 
+				game.gameover = 0;
 				break;
 			}
 		}
-		if (!game.gameover) {
+		if (!game.gameover && game.start) {
 			render(&game);
 			glXSwapBuffers(dpy, win);
 		}
-		if (game.scoreScreen==1) {
+		if (game.scoreScreen) {
 			std::cout<<"calling screen 3\n";
 			screen3(&game); 
-			break;
+			std::cout<<"scoreScreen: " << game.scoreScreen << "\n";
+			std::cout<<"gameover: " << game.gameover << "\n";
+			std::cout<<"startScreen: " << game.startScreen << "\n";
+			reset_player(&game);
 		}
 
 	}
@@ -250,6 +263,11 @@ void screen1(Game *game) //start screen
 				game->running = 0;
 			}
 		}
+		if (game->scoreScreen) {
+			std::cout<<"calling screen 3\n";
+			screen3(game); 
+			break;
+		}
 		render_StartScreen(game);
 		glXSwapBuffers(dpy, win);
 	}
@@ -271,28 +289,30 @@ void screen2(Game *game) //game over screen
 {
 	//std::cout<<"made it here\n";
 	int donesscreen = 0;
-	while (game->gameover) {
+	int hold = 1;
+	while (hold) {
 		while (XPending(dpy)) {
 			XEvent e;
 			XNextEvent(dpy, &e);
 			check_resize(&e);
 			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
 				game->running = 0;
-				game->gameover = 0;
+				break;
 			}
 		}
 		if(game->scoreScreen == 1) {
-			game->gameover = 0;
-			std::cout<<"setting gameover to 0\n";
+			std::cout<<"setting hold to 0\n";
+			hold = 0;
 		}
+		//std::cout<<"game->gameover = "<< game->gameover << "\n";
 		rendergameoverScreen(game);
 		glXSwapBuffers(dpy, win);
 	}
-	game->gameover = 0;
 }
 
 void screen3(Game *game) //score screen
 {
+	organize_scores();
 	//std::cout<<"made it here\n";
 	int donesscreen = 0;
 	while (game->scoreScreen) {
@@ -305,10 +325,20 @@ void screen3(Game *game) //score screen
 				game->scoreScreen = 0;
 			}
 		}
+		if (keys[XK_BackSpace] || keys[XK_Return]) {
+			std::cout<<"back to start...\n";
+			game->scoreScreen = 0;
+			game->startScreen = 1;
+			game->start = 0;
+			game->gameover = 0;
+			keys[XK_BackSpace] = 0;
+			keys[XK_Return] = 0;
+		}
 		renderscoreScreen(game);
 		glXSwapBuffers(dpy, win);
 	}
 	game->scoreScreen = 0;
+	delete[] names;
 }
 
 void cleanupXWindows(void)
@@ -569,6 +599,48 @@ void check_resize(XEvent *e)
 	}
 }
 
+void reset_player(Game *g)
+{
+		VecZero(g->player1.dir);
+		g->player1.currentcombo = 0;
+		g->player1.pos[0] = (Flt)(1250/2);
+		g->player1.pos[1] = (Flt)(900/2);
+		g->player1.pos[2] = 0.0f;
+		g->player1.origin[0] = (Flt)(1250/2);
+		g->player1.origin[1] = (Flt)(900/2);
+		g->player1.origin[2] = 0.0f;
+		VecZero(g->player1.vel);
+		g->player1.angle = 0.0;
+		g->player1.color[0] = 1.0;
+		g->player1.color[1] = 1.0;
+		g->player1.color[2] = 1.0;
+		g->player1.multi = 1.0;
+		g->player1.score = 0;
+		g->player1.check = 0;
+		g->player1.check2 = 0;
+		g->player1.radius = 20;
+		g->player1.invuln = 0;
+		g->player1.lives = 3;
+		g->player1.bulletType = 1;
+		g->player1.oldbType = 1;
+		g->player1.tempinvuln = 0;
+		g->player1.tempRF = 0;
+		while (g->zhead) {
+			deleteZone(g,g->zhead);
+			//g->zhead = g->zhead->next;
+		}
+		Zombie *z = g->ahead;
+		while (z) {
+			Zombie *savez = z->next;
+			deleteZombie(g, z);
+			z = savez;
+			g->nzombies--;
+		}
+		g->zhead = NULL;
+		g->zcnt = 0;
+		g->wcnt = 0;
+}
+
 void normalize(Vec v) 
 {
 	Flt len = v[0]*v[0] + v[1]*v[1];
@@ -742,6 +814,7 @@ void player_zomb_collision(Game *g)
 					//if (g->player1.lives == 1) print warning
 					if (g->player1.lives < 1) {
 						g->gameover = 1; // YOU LOSE
+						g->start = 0;
 						std::cout<<"returning\n";
 						return;
 					}
@@ -1026,7 +1099,10 @@ void render_StartScreen(Game *g)
 				switch (g->old_selection) {
 					case 1: {
 							g->startScreen = 0;
+							g->gameover = 0;
+							g->start = 1;
 							g->current_selection = g->old_selection;
+							std::cout<<"game->gOV: " << g->gameover << "\n";
 							break;
 						}
 					case 2: {
@@ -1036,6 +1112,8 @@ void render_StartScreen(Game *g)
 							break;
 						}
 					case 3: {
+							g->startScreen = 0;
+							g->scoreScreen = 1;
 							//High Scores page...
 							g->current_selection = g->old_selection;
 							break;
@@ -1056,6 +1134,9 @@ void render_StartScreen(Game *g)
 	} else if (keys[XK_Return] || keys[XK_space]) {
 		g->old_selection = g->current_selection;
 		g->current_selection = 0;
+		keys[XK_BackSpace] = 0;
+		keys[XK_Return] = 0;
+		keys[XK_space] = 0;
 	}
 }
 
@@ -1069,7 +1150,12 @@ void rendergameoverScreen(Game *g)
 	std::string here = keyCheck(g);
 	if (here == "~") {
 		g->scoreScreen=1;
+		/*time to write name to file*/
+		std::fstream scores; //local scores
+		scores.open("localscores.txt", std::ios::out | std::ios::app);
+		scores << name << "\n" << g->player1.score <<"\n"<< g->zcnt << "\n"<< g->wcnt << std::endl;
 		std::cout<<"exitting to score screen\n";
+		scores.close();
 		return;
 	}
 	if (name.length() < 32) {
@@ -1111,15 +1197,100 @@ void renderscoreScreen(Game *g)
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	sscreen_background(bgTexture0, 1.0, 1.0, 1.0, 1.0);
 	//
-	r.bot = yres*0.7;
-	r.left = xres*0.5;
+	r.bot = yres*0.96;
+	r.left = xres*0.1;
 	r.center = 1;
-	ggprint16(&r, 32, 0x00ff00ff, "GAME OVER");
-	ggprint12(&r, 24, 0x00ff00ff, "A Zombie Ate Your Brains");
-	ggprint12(&r, 32, 0x00ff00ff, "Your SCORE IS: %i", g->player1.score);
-	ggprint16(&r, 32, 0x00ff00ff, "Try Again");
-	ggprint16(&r, 32, 0x00ff00ff, "Exit");
+	ggprint16(&r, 0, 0x00ff00ff, "Name");
+	r.left = xres*0.4;
+	ggprint16(&r, 0, 0x00ff00ff, "Score");
+	r.left = xres*0.6;
+	ggprint16(&r, 0, 0x00ff00ff, "Zone");
+	r.left = xres*0.7;
+	ggprint16(&r, 16, 0x00ff00ff, "Wave");
+	r.left = xres*0.0;
+	ggprint16(&r, 86, 0x00ff00ff, "________________________________________________________________________________________________________________________________________________________________________________________________");
+	
+
+	for (int i = 0; i<10; i++) {
+		int x = i+1;
+		r.left = xres*0.03;
+		ggprint16(&r, 0, 0x00ff00ff, "%i.", x);
+
+		r.left = xres*0.1;
+		ggprint16(&r, 0, 0x00ff00ff, names[i*4].c_str());
+
+		r.left = xres*0.4;
+		ggprint16(&r, 0, 0x00ff00ff, names[i*4+1].c_str());
+
+		r.left = xres*0.6;
+		ggprint16(&r, 0, 0x00ff00ff, names[i*4+2].c_str());
+	
+		r.left = xres*0.7;
+		ggprint16(&r, 64, 0x00ff00ff, names[i*4+3].c_str());
+	}
 }
+
+void organize_scores()
+{
+	int count = 0;
+	std::fstream scores; //local scores
+	std::string line, line2;
+	scores.open("localscores.txt");
+	while (std::getline(scores,line)) {
+		++line_count;
+	}
+	scores.close();
+	scores.open("localscores.txt");
+
+	//if (!names) {
+		names = new std::string[line_count];
+	//}
+	/*} else {
+		delete[] names;
+		names = 0;
+		std::cout<<"names after delete: "<<names<<"\n";
+		names = new std::string[line_count];
+	}*/
+	while (std::getline(scores,line2)) {
+		if (line2 != "") {
+			//std::cout<<"line2: " << line2 << "\n";
+			names[count] = line2;
+			count++;
+		}
+	}
+	for (int i = 0; i < line_count; i++) {
+		std::cout<<"local: " << names[i] << "\n";
+	}
+
+	std::string tmp, tmp1, tmp2, tmp3;
+	for (int i = 0; i < line_count/4+1; i++) {
+		for (int i = 0; i < line_count/4-1; i++) {
+			std::stringstream s_str(names[i*4+1]);
+			std::stringstream s_str2(names[i*4+5]);
+			int x, y;
+			s_str >> x;
+			s_str2 >> y;
+			if (x < y) {
+				tmp = names[i*4+4];
+				tmp1 = names[i*4+5];
+				tmp2 = names[i*4+6];
+				tmp3 = names[i*4+7];
+
+				names[i*4+4] = names[i*4];
+				names[i*4+5] = names[i*4+1];
+				names[i*4+6] = names[i*4+2];
+				names[i*4+7] = names[i*4+3];
+
+				names[i*4] = tmp;
+				names[i*4+1] = tmp1;
+				names[i*4+2] = tmp2;
+				names[i*4+3] = tmp3;
+			}
+		}
+	}
+	line_count = 0;
+	scores.close();
+}	
 
 void sscreen_background(GLuint tex, float r, float g, float b, float alph)
 {

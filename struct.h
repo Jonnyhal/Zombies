@@ -207,7 +207,7 @@ struct Game {
         Zone *zhead;//zone, not zombie
         Mouse *cross;
 	Loot *lhead;
-        int gameover;
+        int gameover, start;
         int running;
         int lootcnt;
         int zcnt;
@@ -236,6 +236,7 @@ struct Game {
                 startScreen = 1;
 		scoreScreen = 0;
                 gameover = 0;
+		start = 0;
                 running = 1;
                 zombieSpawn = 9;
 		spacing = 0;
