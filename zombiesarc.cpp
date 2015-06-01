@@ -144,9 +144,9 @@ void physics(Game *game);
 void player_Ang(Game *g);
 void render_StartScreen(Game *game);
 void sscreen_background(GLuint tex, float r, float g, float b, float alph);
-void renderscoreScreen(Game *g);
+void renderscoreScreen();
 void rendergameoverScreen(Game *g);
-void rendercontrolScreen(Game *g);
+void rendercontrolScreen();
 int fib(int n);
 void zMove(Game *g);
 void screen1(Game *game);
@@ -344,7 +344,7 @@ void screen3(Game *game) //score screen
 			keys[XK_BackSpace] = 0;
 			keys[XK_Return] = 0;
 		}
-		renderscoreScreen(game);
+		renderscoreScreen();
 		glXSwapBuffers(dpy, win);
 	}
 	game->scoreScreen = 0;
@@ -371,7 +371,7 @@ void screen4(Game *game)
 			keys[XK_BackSpace] = 0;
 			keys[XK_Return] = 0;
 		}
-		rendercontrolScreen(game);
+		rendercontrolScreen();
 		glXSwapBuffers(dpy, win);
 	}
 	game->controlScreen = 0;
@@ -1241,14 +1241,14 @@ void rendergameoverScreen(Game *g)
 	//std::cout<<"length: " << name.length() << "\n";
 }
 
-void rendercontrolScreen(Game *g)
+void rendercontrolScreen()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	sscreen_background(bgTexture2, 1.0, 1.0, 1.0, 1.0);
 }
 
-void renderscoreScreen(Game *g)
+void renderscoreScreen()
 {
 	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);
