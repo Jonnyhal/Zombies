@@ -142,11 +142,13 @@ void render_StartScreen(Game *game);
 void sscreen_background(GLuint tex, float r, float g, float b, float alph);
 void renderscoreScreen(Game *g);
 void rendergameoverScreen(Game *g);
+void rendercontrolScreen(Game *g);
 int fib(int n);
 void zMove(Game *g);
 void screen1(Game *game);
 void screen2(Game *game);
 void screen3(Game *game);
+void screen4(Game *game);
 void show_mouse_cursor(const int onoff);
 void reset_player(Game *g);
 void organize_scores();
@@ -263,10 +265,14 @@ void screen1(Game *game) //start screen
 				game->running = 0;
 			}
 		}
+		if (game->controlScreen) {
+			std::cout<<"calling screen 4\n";
+			screen4(game);
+		}
 		if (game->scoreScreen) {
 			std::cout<<"calling screen 3\n";
 			screen3(game); 
-			break;
+			//break;
 		}
 		render_StartScreen(game);
 		glXSwapBuffers(dpy, win);
@@ -339,6 +345,34 @@ void screen3(Game *game) //score screen
 	}
 	game->scoreScreen = 0;
 	delete[] names;
+}
+
+void screen4(Game *game)
+{
+	int donesscreen = 0;
+	while (game->controlScreen) {
+		while (XPending(dpy)) {
+			XEvent e;
+			XNextEvent(dpy, &e);
+			check_resize(&e);
+			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
+				game->running = 0;
+				game->controlScreen = 0;
+			}
+		}
+		if (keys[XK_BackSpace] || keys[XK_Return]) {
+			std::cout<<"back to start...\n";
+			game->controlScreen = 0;
+			game->startScreen = 1;
+			keys[XK_BackSpace] = 0;
+			keys[XK_Return] = 0;
+		}
+		rendercontrolScreen(game);
+		glXSwapBuffers(dpy, win);
+	}
+	game->controlScreen = 0;
+	std::cout<<"leaving screen 4\n";
+
 }
 
 void cleanupXWindows(void)
@@ -1069,7 +1103,7 @@ void render_StartScreen(Game *g)
 	r.left = xres - xres*0.5;
 	r.center = 1;
 	ggprint16(&r, 32, 0x00ff00ff, "START GAME");
-	ggprint16(&r, 32, 0x00ff00ff, "SOUND ");
+	ggprint16(&r, 32, 0x00ff00ff, "CONTROLS");
 	ggprint16(&r, 32, 0x00ff00ff, "HIGH SCORES");
 	//...
 
@@ -1085,7 +1119,7 @@ void render_StartScreen(Game *g)
 				s.bot = yres - yres*0.7 - 32;
 				s.left = xres - xres*0.5;
 				s.center = 1;
-				ggprint16(&s, 32, 0x00ffffff, "[           ]");
+				ggprint16(&s, 32, 0x00ffffff, "[                ]");
 				break;
 			}
 		case 3: {
@@ -1106,9 +1140,11 @@ void render_StartScreen(Game *g)
 							break;
 						}
 					case 2: {
-							//options...
+							//controls...
+							g->controlScreen = 1;
 							g->current_selection = g->old_selection;
-							play_sounds ^= 1;
+							std::cout<<"leaving start screen\n";
+							//play_sounds ^= 1;
 							break;
 						}
 					case 3: {
@@ -1190,6 +1226,13 @@ void rendergameoverScreen(Game *g)
 		ggprint16(&r, 32, 0x0011ff22, "%s", name.c_str());
 	}
 	//std::cout<<"length: " << name.length() << "\n";
+}
+
+void rendercontrolScreen(Game *g)
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	sscreen_background(bgTexture0, 1.0, 1.0, 1.0, 1.0);
 }
 
 void renderscoreScreen(Game *g)
