@@ -101,6 +101,7 @@ GC gc;
 //images/textures
 //-----------------------------------------------------------------------------
 Ppmimage *background0 = NULL;
+Ppmimage *background1 = NULL;
 Ppmimage *gameover0 = NULL;
 Ppmimage *player1 = NULL;
 Ppmimage *player1RED = NULL;
@@ -108,9 +109,11 @@ Ppmimage *player1BLU = NULL;
 Ppmimage *zombie0 = NULL;
 Ppmimage *blackicon = NULL;
 Ppmimage *mouse = NULL;
+
 //
 GLuint mouseTex;
 GLuint bgTexture0;
+GLuint bgTexture1;
 GLuint gameoverTex;
 GLuint player1Tex;
 GLuint player1REDTex;
@@ -481,9 +484,11 @@ void init_opengl(void)
 	char tempname5[] = "./images/soldierRED.ppm";
 	char tempname6[] = "./images/soldierBLU.ppm";
 	char tempname7[] = "./images/mouse.ppm";
+	char tempname8[] = "./images/startssbg.ppm";
 
 	//Load image files
 	background0 = ppm6GetImage(tempname);
+	background1 = ppm6GetImage(tempname8);
 	gameover0   = ppm6GetImage(tempname1);
 	player1     = ppm6GetImage(tempname2);
 	zombie0     = ppm6GetImage(tempname3);
@@ -493,6 +498,8 @@ void init_opengl(void)
 	mouse	    = ppm6GetImage(tempname7);
 
 	//Generate Textures
+	glGenTextures(1, &bgTexture1);
+	init_textures(background1, bgTexture1);
 	glGenTextures(1, &bgTexture0);
 	init_textures(background0, bgTexture0);
 	glGenTextures(1, &gameoverTex);
@@ -1062,7 +1069,7 @@ void render_StartScreen(Game *g)
 {
 	Rect r,s;
 	glClear(GL_COLOR_BUFFER_BIT);
-	sscreen_background(bgTexture0, 1.0, 1.0, 1.0, 1.0);
+	sscreen_background(bgTexture1, 1.0, 1.0, 1.0, 1.0);
 	//
 	//XDrawString(dis,win,gc,x,y, string, strlen(string));
 	r.bot = yres - yres*0.7;
