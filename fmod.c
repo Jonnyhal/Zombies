@@ -15,7 +15,7 @@ See other sample programs in the fmod /examples directory
 #include <FMOD/fmod.h>
 #include <FMOD/fmod_errors.h>
 #include <stdio.h>
-
+#include "fmod.h"
 //local global variables are defined here
 #define MAX_SOUNDS 32
 FMOD_SYSTEM  *xsystem;
@@ -66,15 +66,16 @@ int fmod_createsound(char *fname, int i)
 	return 0;
 }
 
-int fmod_playsound(int i)
+int fmod_playsound(int i, float volume)
 {
 	FMOD_RESULT result;
 	//printf("fmod_playsound(%i)...\n",i);
-	result = FMOD_System_PlaySound(xsystem, FMOD_CHANNEL_FREE, sound[i], 0, &channel);
+	result = FMOD_System_PlaySound(xsystem, FMOD_CHANNEL_FREE, sound[i], 1, &channel);
 	if (ERRCHECK(result)) {
 		printf("error fmod_playsound()\n");
 		return 1;
 	}
+	fmod_volume(volume);
 	return 0;
 }
 
@@ -130,3 +131,18 @@ int fmod_cleanup(void)
 	return 0;
 }
 
+int fmod_volume(float i)
+{
+	FMOD_RESULT result;
+	result = FMOD_Channel_SetVolume(channel,i);
+	if (ERRCHECK(result)) {
+		printf("error fmod_volume()\n");
+		return 1;
+	}
+	result = FMOD_Channel_SetPaused(channel,false);
+	if (ERRCHECK(result)) {
+		printf("error channel->setPaused()\n");
+		return 1;
+	}
+	return 0;
+}
