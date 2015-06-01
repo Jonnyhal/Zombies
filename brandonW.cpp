@@ -75,7 +75,7 @@ extern void fire_weapon(Game *g)
 				b->type = 1;
 				Bullet *c = new Bullet;
 				c->type = 2;
-				fmod_playsound(9,0.3);
+				fmod_playsound(9,0.25);
 				g->player1.oldbType = 2;
 				timeCopy(&b->time, &bt);
 				timeCopy(&c->time, &bt);
@@ -456,37 +456,54 @@ extern void player_loot_collision(Game *g, Loot *l)
 extern void powerUp(Game *g, Loot *l)
 {
 	switch (l->type) {
-		case 0:
-			//nothing
-			break;
-		case 1:
-			//rapid fire
-			g->player1.tempRF = 1;
-			rftime(g);
-			break;
-		case 2:
-			//double shot
-			g->player1.bulletType = 2;
-			fmod_playsound(4,1.0);
-			break;
-		case 3: 
-			//triple shot
-			g->player1.bulletType = 3;
-			fmod_playsound(4,1.0);
-			break;
-		case 4:
-			//temp invuln
-			g->player1.tempinvuln = 1;
-			g->player1.invuln = 1;
-			invulntime(g);
-			break;
-		case 5:
-			//wave clear
-			break;
-		case 6:
-			//1up
-			g->player1.lives++;
-			break;
+		case 0: {
+				//score
+				g->player1.score += 250 * g->player1.multi / 2;
+				break;
+			}
+		case 1: {
+				//rapid fire
+				g->player1.tempRF = 1;
+				rftime(g);
+				break;
+			}
+		case 2: {
+				//double shot
+				g->player1.bulletType = 2;
+				fmod_playsound(4,1.0);
+				break;
+			}
+		case 3: {
+				//triple shot
+				g->player1.bulletType = 3;
+				fmod_playsound(4,1.0);
+				break;
+			}
+		case 4: {
+				//temp invuln
+				g->player1.tempinvuln = 1;
+				g->player1.invuln = 1;
+				invulntime(g);
+				break;
+			}
+		case 5: {
+				//wave clear
+				Zombie *q = g->ahead;
+				while (q) {
+					multitime(g);
+					lootDrop(g, q);
+					Zombie *saveq = q->next;
+					deleteZombie(g, q);
+					q = saveq;
+					g->nzombies--;
+				}
+				break;
+			}
+		case 6: {
+				//1up
+				g->player1.lives++;
+				break;
+			}
 	}
 }
 /*=============== LOOT IDEAS ==================
@@ -508,6 +525,7 @@ extern void lootDrop(Game *g, Zombie *a)
 	char texname3[] = "./images/lifeup.ppm";
 	char texname4[] = "./images/rapidfire.ppm";
 	char texname5[] = "./images/invuln.ppm";
+	char texname6[] = "./images/score.ppm";
 	//Load image files
 	// Create a random number from 1-100
 	int r1 = rand() % 100 + 1;
@@ -545,8 +563,11 @@ extern void lootDrop(Game *g, Zombie *a)
 			if (g->player1.bulletType == 2 || g->player1.bulletType == 3) {
 				g->lhead->type = 0;
 				//dead drop, drop nothing--they have double shot or better
-				std::cout << "DEAD DROP DOUBLE\n";
-				return;
+				std::cout << "DEAD DROP DOUBLE(SCORE)\n";
+				g->lhead->lootbg = ppm6GetImage(texname6);
+				glGenTextures(1, &g->lhead->lootTex);
+				init_textures(g->lhead->lootbg, g->lhead->lootTex);
+				//return;
 			} else {
 				g->lhead->type = 2;
 				std::cout << "DOUBLE SHOT DROP\n";
@@ -559,8 +580,11 @@ extern void lootDrop(Game *g, Zombie *a)
 			if (g->player1.bulletType == 3) {
 				//dead drop, drop nothing--they have triple shot or better
 				g->lhead->type = 0;
-				std::cout << "DEAD DROP DOUBLE\n";
-				return;
+				std::cout << "DEAD DROP DOUBLE(SCORE)\n";
+				g->lhead->lootbg = ppm6GetImage(texname6);
+				glGenTextures(1, &g->lhead->lootTex);
+				init_textures(g->lhead->lootbg, g->lhead->lootTex);
+				//return;
 			} else {
 				//triple shot!
 				g->lhead->type = 3;
@@ -1060,7 +1084,7 @@ extern void updateRF(Game *g)
 	struct timespec bt;
 	clock_gettime(CLOCK_REALTIME, &bt);
 	double ts = timeDiff(&g->player1.rfTimer, &bt);
-	if (ts > 10) {
+	if (ts > 4) {
 		//time to reset timer.
 		g->player1.tempRF = 0;
 	}

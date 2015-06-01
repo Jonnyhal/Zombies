@@ -85,6 +85,7 @@ double timeSpan=0.0;
 int xres, yres;
 std::string *names;
 int line_count = 0;
+int lastkey;
 //play sounds
 #ifdef USE_SOUND
 int play_sounds = 0;
@@ -135,7 +136,7 @@ void init_opengl(void);
 void cleanupXWindows(void);
 void check_resize(XEvent *e);
 void check_mouse(XEvent *e, Game *game);
-int check_keys(XEvent *e);
+int check_keys(XEvent *e, Game *g);
 void init(Game *g);
 void spawnZombies(Game *g);
 //void init_sounds(void);
@@ -177,7 +178,7 @@ int main(void)
 			XNextEvent(dpy, &e);
 			check_resize(&e);
 			check_mouse(&e, &game);
-			done = check_keys(&e);
+			done = check_keys(&e, &game);
 			if (done)
 				game.running = 0;
 		}
@@ -263,7 +264,7 @@ void screen1(Game *game) //start screen
 			XNextEvent(dpy, &e);
 			check_resize(&e);
 			check_mouse(&e, game);
-			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
+			if((donesscreen = check_keys(&e,game))) {//NOT comparing, setting and checking value for 0/1
 				game->startScreen = 0;
 				game->running = 0;
 			}
@@ -304,7 +305,7 @@ void screen2(Game *game) //game over screen
 			XEvent e;
 			XNextEvent(dpy, &e);
 			check_resize(&e);
-			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
+			if((donesscreen = check_keys(&e, game))) {//NOT comparing, setting and checking value for 0/1
 				game->running = 0;
 				break;
 			}
@@ -329,7 +330,7 @@ void screen3(Game *game) //score screen
 			XEvent e;
 			XNextEvent(dpy, &e);
 			check_resize(&e);
-			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
+			if((donesscreen = check_keys(&e, game))) {//NOT comparing, setting and checking value for 0/1
 				game->running = 0;
 				game->scoreScreen = 0;
 			}
@@ -358,7 +359,7 @@ void screen4(Game *game)
 			XEvent e;
 			XNextEvent(dpy, &e);
 			check_resize(&e);
-			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
+			if((donesscreen = check_keys(&e, game))) {//NOT comparing, setting and checking value for 0/1
 				game->running = 0;
 				game->controlScreen = 0;
 			}
@@ -788,7 +789,7 @@ void check_mouse(XEvent *e, Game *g)
 	}
 }
 
-int check_keys(XEvent *e)
+int check_keys(XEvent *e, Game *g)
 {
 	//keyboard input?
 	static int shift=0;
@@ -796,8 +797,15 @@ int check_keys(XEvent *e)
 	//Log("key: %i\n", key);
 	if (e->type == KeyRelease) {
 		keys[key]=0;
-		if (key == XK_Shift_L || key == XK_Shift_R)
+		if (key == XK_Shift_L || key == XK_Shift_R) {
+			std::cout<<"shift released\n";
 			shift=0;
+		}
+		if (key == XK_8)
+			std::cout<<"space released\n";
+			//lastkey = 0;
+			
+			
 		return 0;
 	}
 	if (e->type == KeyPress) {
@@ -806,6 +814,11 @@ int check_keys(XEvent *e)
 			shift=1;
 			return 0;
 		}
+		//if (key == XK_space) {
+		//	fire_weapon(g);
+		//	return 0;
+		//}
+			
 	} else {
 		return 0;
 	}
@@ -824,6 +837,7 @@ int check_keys(XEvent *e)
 		case XK_minus:
 			break;
 	}
+	lastkey = key;
 	return 0;
 }
 
@@ -1081,13 +1095,13 @@ void physics(Game *g)
 		keys[XK_i] = 0;
 	}
 
-	if (keys[XK_space]) {
-		fire_weapon(g);
-	}
 	if (g->player1.is_firing) {
 		fire_weapon(g);
 	}
 
+	if (g->player1.tempRF)
+		fire_weapon(g);
+	
 	/*if (keys[XK_1]) {
 		g->player1.bulletType = 1;
 
@@ -1203,10 +1217,12 @@ void rendergameoverScreen(Game *g)
 		g->spacing = 0;
 		return;
 	}
-	if (name.length() < 32) {
+	if (name.length() < 14) {
 		//oldname = name;
 		name += here;
 		std::cout<<"name: " << name <<"\n";
+	} else {
+		g->spacing -= g->spacing - g->oldspacing;
 	}
 	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);

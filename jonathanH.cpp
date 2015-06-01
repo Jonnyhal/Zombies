@@ -289,7 +289,7 @@ extern void zomb_zomb_collision(Zombie *a)
                 z0 = a->pos[0] - c->pos[0];
                 z1 = a->pos[1] - c->pos[1];
                 zdist = sqrt(z0*z0 + z1*z1);
-                if(zdist <= a->radius) {
+                if(zdist <= a->radius && zdist != 0) {
                         a->vel[0] += z0/zdist * 5.0;
                         a->vel[1] += z1/zdist * 5.0;
                 }

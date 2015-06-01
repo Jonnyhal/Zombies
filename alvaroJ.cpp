@@ -48,6 +48,7 @@ extern void render(Game *g)
                 struct timespec bt;
                 clock_gettime(CLOCK_REALTIME, &bt);
                 double ts = timeDiff(&l->lootTimer, &bt);
+		//std::cout<<"loot timer: " << ts << "\n";
                 if (ts > 3) {
                         //MAKE IT BLINK!!!!!!!!
                         if (ts < 3.15)
