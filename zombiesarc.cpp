@@ -1156,6 +1156,8 @@ void rendergameoverScreen(Game *g)
 		scores << name << "\n" << g->player1.score <<"\n"<< g->zcnt << "\n"<< g->wcnt << std::endl;
 		std::cout<<"exitting to score screen\n";
 		scores.close();
+		name = "";
+		g->spacing = 0;
 		return;
 	}
 	if (name.length() < 32) {
