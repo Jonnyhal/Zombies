@@ -7,7 +7,11 @@
 #include <GL/glu.h>
 #include <GL/glx.h>
 extern GLuint silhouetteTexture;
+extern GLuint NsilhouetteTexture;
+extern GLuint BsilhouetteTexture;
 extern GLuint silhouette_player_Texture;
+extern GLuint LFsilhouette_player_Texture;
+extern GLuint RFsilhouette_player_Texture;
 extern GLuint silhouette_player_Texture_2;
 extern GLuint silhouette_player_Texture_3;
 extern GLuint silhouette_mouse_Texture;

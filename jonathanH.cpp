@@ -141,11 +141,13 @@ extern void init(Game *g) {
                 g->zhead->wave = w;
                 g->wcnt++;
         }
+	
         spawnZombies(g);
 }
 
 extern void spawnZombies(Game *g)
 {
+	rzomb = rand()%3;
         std::cout<<"\nwcnt in spawnZombies: " << g->wcnt << "\n";
         std::cout<<"zcnt in spawnZombies: " << g->zcnt << "\n";
         int cnt;

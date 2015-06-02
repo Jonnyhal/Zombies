@@ -16,5 +16,5 @@ void spawnZombies(Game *g);
 void zMove(Game *g, Zombie *a);
 void buildZombieFragment(Zombie *ta, Zombie *a);
 void zomb_zomb_collision(Zombie *a);
-
+extern int rzomb;
 #endif
