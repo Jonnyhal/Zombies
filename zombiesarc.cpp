@@ -766,6 +766,7 @@ void reset_player(Game *g)
 		g->zhead = NULL;
 		g->zcnt = 0;
 		g->wcnt = 0;
+		g->zombieSpawn = 9;
 }
 
 void normalize(Vec v) 
