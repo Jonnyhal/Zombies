@@ -7,6 +7,8 @@
 #include <GL/glu.h>
 #include <GL/glx.h>
 extern GLuint silhouetteTexture;
+extern GLuint NsilhouetteTexture;
+extern GLuint BsilhouetteTexture;
 extern GLuint silhouette_player_Texture;
 extern GLuint LFsilhouette_player_Texture;
 extern GLuint RFsilhouette_player_Texture;

@@ -25,7 +25,6 @@ extern "C"{
 int bur = 0;
 
 
-
 extern void render(Game *g)
 {
 //GLuint silhouetteTexture;
@@ -249,12 +248,19 @@ extern void render(Game *g)
                 int count = 1;
                 while (a) {
                         //Log("draw asteroid...\n");
-                        //glColor3fv(a->color);
 			glColor3fv(g->player1.color);
                         glPushMatrix();
                         glTranslatef(a->pos[0], a->pos[1], a->pos[2]);
-                        glBindTexture(GL_TEXTURE_2D, silhouetteTexture);
-                        glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
+			if( rzomb == 0) { 
+				glBindTexture(GL_TEXTURE_2D, BsilhouetteTexture);
+			}
+			else if( rzomb == 1) { 
+				glBindTexture(GL_TEXTURE_2D, NsilhouetteTexture);
+			}
+			else { 
+				glBindTexture(GL_TEXTURE_2D, silhouetteTexture);
+			}
+			glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
                         glEnable(GL_ALPHA_TEST);
                         glAlphaFunc(GL_GREATER, 0.0f);
                         glBegin(GL_QUADS);
@@ -268,23 +274,10 @@ extern void render(Game *g)
                         glPopMatrix();
                         glBindTexture(GL_TEXTURE_2D, 0);
                         glDisable(GL_ALPHA_TEST);
-                        //glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
-                        //Log("%i verts\n",a->nverts);
-                        //for (int j=0; j<a->nverts; j++) {
-                        //      glVertex2f(a->vert[j][0], a->vert[j][1]);
-                        //}
-
-                        //glBegin(GL_LINES);
-                        //      glVertex2f(0,   0);
-                        //      glVertex2f(a->radius, 0);
-                        //glEnd();
                         glColor3f(1.0f, 0.0f, 0.0f);
-//                      glBegin(GL_POINTS);
-//                      glVertex2f(a->pos[0], a->pos[1]);
                         glBegin(GL_POINTS);
                         glVertex2f(a->pos[0], a->pos[1]);
                         glEnd();
-                        //std::cout<<"asteroid angle: " << a->angle << "\n";
                         count++;
                         a = a->next;
                 }

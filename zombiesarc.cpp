@@ -86,6 +86,7 @@ int xres, yres;
 std::string *names;
 int line_count = 0;
 int lastkey;
+int rzomb;
 //play sounds
 #ifdef USE_SOUND
 int play_sounds = 0;
@@ -110,6 +111,8 @@ Ppmimage *RFplayer1 = NULL;
 Ppmimage *player1RED = NULL;
 Ppmimage *player1BLU = NULL;
 Ppmimage *zombie0 = NULL;
+Ppmimage *Nzombie0 = NULL;
+Ppmimage *Bzombie0 = NULL;
 Ppmimage *blackicon = NULL;
 Ppmimage *mouse = NULL;
 Ppmimage *how2play = NULL;
@@ -125,8 +128,12 @@ GLuint RFplayer1Tex;
 GLuint player1REDTex;
 GLuint player1BLUTex;
 GLuint zombieTex;
+GLuint NzombieTex;
+GLuint BzombieTex;
 GLuint blackiconTex;
 GLuint silhouetteTexture;
+GLuint NsilhouetteTexture;
+GLuint BsilhouetteTexture;
 GLuint silhouette_player_Texture;
 GLuint LFsilhouette_player_Texture;
 GLuint RFsilhouette_player_Texture;
@@ -530,6 +537,8 @@ void init_opengl(void)
 	char tempname9[] = "./images/how2play.ppm";
 	char tempname10[] = "./images/LF_Soldier.ppm";
 	char tempname11[] = "./images/RF_Soldier.ppm";
+	char tempname12[] = "./images/Nzombie.ppm";
+	char tempname13[] = "./images/Bzombie.ppm";
 
 	//Load image files
 	background0 = ppm6GetImage(tempname);
@@ -540,6 +549,8 @@ void init_opengl(void)
 	LFplayer1   = ppm6GetImage(tempname10);
 	RFplayer1   = ppm6GetImage(tempname11);
 	zombie0     = ppm6GetImage(tempname3);
+	Nzombie0    = ppm6GetImage(tempname12);
+	Bzombie0    = ppm6GetImage(tempname13);
 	blackicon   = ppm6GetImage(tempname4);
 	player1RED  = ppm6GetImage(tempname5);
 	player1BLU  = ppm6GetImage(tempname6);
@@ -643,6 +654,36 @@ void init_opengl(void)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, 
 			GL_RGBA, GL_UNSIGNED_BYTE, silhouetteData);
 	delete [] silhouetteData;
+	
+	//Naruto zombieTexture
+	int nw = zombie0->width;
+	int nh = zombie0->height;
+	glGenTextures(1, &NzombieTex);
+	init_textures(Nzombie0, NzombieTex);
+	glGenTextures(1, &NsilhouetteTexture);
+	//silhoutte
+	glBindTexture(GL_TEXTURE_2D, NsilhouetteTexture);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	unsigned char *NsilhouetteData = buildAlphaData(Nzombie0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, nw, nh, 0, 
+			GL_RGBA, GL_UNSIGNED_BYTE, NsilhouetteData);
+	delete [] NsilhouetteData;
+	
+	//Blue head zombieTexture
+	int bzw = zombie0->width;
+	int bzh = zombie0->height;
+	glGenTextures(1, &BzombieTex);
+	init_textures(Bzombie0, BzombieTex);
+	glGenTextures(1, &BsilhouetteTexture);
+	//silhoutte
+	glBindTexture(GL_TEXTURE_2D, BsilhouetteTexture);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	unsigned char *BsilhouetteData = buildAlphaData(Bzombie0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bzw, bzh, 0, 
+			GL_RGBA, GL_UNSIGNED_BYTE, BsilhouetteData);
+	delete [] BsilhouetteData;
 	
 	//MouseTexture
 	int mw = 138;
