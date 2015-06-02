@@ -8,6 +8,8 @@
 #include <GL/glx.h>
 extern GLuint silhouetteTexture;
 extern GLuint silhouette_player_Texture;
+extern GLuint LFsilhouette_player_Texture;
+extern GLuint RFsilhouette_player_Texture;
 extern GLuint silhouette_player_Texture_2;
 extern GLuint silhouette_player_Texture_3;
 extern GLuint silhouette_mouse_Texture;

@@ -22,7 +22,7 @@ extern "C"{
 #include "loot.h"
 #include "other.h"
 #include "delete.h"
-
+int bur = 0;
 
 
 
@@ -202,28 +202,46 @@ extern void render(Game *g)
                 glPopMatrix();*/
                 //std::cout<< "blinking!" << "\n";
         }
+		//========= animation ==========//	
+	        if (keys[XK_w] || keys[XK_a] || keys[XK_d] || keys [XK_s]) {
+                if(bur < 11 || bur > 21)
+                {
+                //Draw the player1
+                glColor3fv(g->player1.color);
+                glPushMatrix();
+                glTranslatef(g->player1.pos[0], g->player1.pos[1], g->player1.pos[2]);
+                //float angle = atan2(player1.dir[1], player1.dir[0]);
+                //std::cout<<"angle = " << g->player1.angle << std::endl;
 
-        /*if (keys[XK_Up]) {
-                int i;
-                //draw thrust
-                Flt rad = ((g->player1.angle+90.0) / 360.0f) * PI * 2.0;
-                //convert angle to a vector
-                Flt xdir = cos(rad);
-                Flt ydir = sin(rad);
-                Flt xs,ys,xe,ye,r;
-                glBegin(GL_LINES);
-                for (i=0; i<16; i++) {
-                        xs = -xdir * 11.0f + rnd() * 4.0 - 2.0;
-                        ys = -ydir * 11.0f + rnd() * 4.0 - 2.0;
-                        r = rnd()*40.0+40.0;
-                        xe = -xdir * r + rnd() * 18.0 - 9.0;
-                        ye = -ydir * r + rnd() * 18.0 - 9.0;
-                        glColor3f(rnd()*.3+.7, rnd()*.3+.7, 0);
-                        glVertex2f(g->player1.pos[0]+xs,g->player1.pos[1]+ys);
-                        glVertex2f(g->player1.pos[0]+xe,g->player1.pos[1]+ye);
+                        if (bur < 11) {
+                                glBindTexture(GL_TEXTURE_2D, RFsilhouette_player_Texture);
+                                bur++;
+                                }
+                        else {
+                                glBindTexture(GL_TEXTURE_2D, LFsilhouette_player_Texture);
+                                bur++;
+                                }
+                        if (bur == 31) { bur = 0; };
+
+                        glRotatef(g->player1.angle, 0.0f, 0.0f, 1.0f);
+                        glEnable(GL_ALPHA_TEST);
+			glAlphaFunc(GL_GREATER, 0.0f);
+                        glColor4ub(255,255,255,255);
+                        glBegin(GL_QUADS);
+                                //float w = g->player1.width;
+                                float w = 28.0f;
+                                glTexCoord2f(0.0f, 0.0f); glVertex2f(-w,  w);
+                                glTexCoord2f(1.0f, 0.0f); glVertex2f( w,  w);
+                                glTexCoord2f(1.0f, 1.0f); glVertex2f( w, -w);
+                                glTexCoord2f(0.0f, 1.0f); glVertex2f(-w, -w);
+                        glEnd();
+                        glPopMatrix();
+                        glBindTexture(GL_TEXTURE_2D, 0);
+                        glDisable(GL_ALPHA_TEST);
                 }
-                glEnd();
-        }*/
+                else
+                bur++;
+	}		
         //-------------------------------------------------------------------------
         //Draw the zombies
         {

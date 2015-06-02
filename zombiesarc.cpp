@@ -105,6 +105,8 @@ Ppmimage *background0 = NULL;
 Ppmimage *background1 = NULL;
 Ppmimage *gameover0 = NULL;
 Ppmimage *player1 = NULL;
+Ppmimage *LFplayer1 = NULL;
+Ppmimage *RFplayer1 = NULL;
 Ppmimage *player1RED = NULL;
 Ppmimage *player1BLU = NULL;
 Ppmimage *zombie0 = NULL;
@@ -118,12 +120,16 @@ GLuint bgTexture0;
 GLuint bgTexture1;
 GLuint gameoverTex;
 GLuint player1Tex;
+GLuint LFplayer1Tex;
+GLuint RFplayer1Tex;
 GLuint player1REDTex;
 GLuint player1BLUTex;
 GLuint zombieTex;
 GLuint blackiconTex;
 GLuint silhouetteTexture;
 GLuint silhouette_player_Texture;
+GLuint LFsilhouette_player_Texture;
+GLuint RFsilhouette_player_Texture;
 GLuint silhouette_player_Texture_2;
 GLuint silhouette_player_Texture_3;
 GLuint silhouette_mouse_Texture;
@@ -522,6 +528,8 @@ void init_opengl(void)
 	char tempname7[] = "./images/mouse.ppm";
 	char tempname8[] = "./images/startssbg.ppm";
 	char tempname9[] = "./images/how2play.ppm";
+	char tempname10[] = "./images/LF_Soldier.ppm";
+	char tempname11[] = "./images/RF_Soldier.ppm";
 
 	//Load image files
 	background0 = ppm6GetImage(tempname);
@@ -529,6 +537,8 @@ void init_opengl(void)
 	how2play    = ppm6GetImage(tempname9);
 	gameover0   = ppm6GetImage(tempname1);
 	player1     = ppm6GetImage(tempname2);
+	LFplayer1   = ppm6GetImage(tempname10);
+	RFplayer1   = ppm6GetImage(tempname11);
 	zombie0     = ppm6GetImage(tempname3);
 	blackicon   = ppm6GetImage(tempname4);
 	player1RED  = ppm6GetImage(tempname5);
@@ -560,6 +570,34 @@ void init_opengl(void)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w1, h1, 0, 
 			GL_RGBA, GL_UNSIGNED_BYTE, silhouettePlayerData);
 	delete [] silhouettePlayerData;
+	
+	//Left foot PlayerTexture
+	int lfw = player1->width;
+	int lfh = player1->height;
+	glGenTextures(1, &LFplayer1Tex);
+	init_textures(LFplayer1, LFplayer1Tex);
+	glGenTextures(1, &LFsilhouette_player_Texture);
+	glBindTexture(GL_TEXTURE_2D, LFsilhouette_player_Texture);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	unsigned char *LFsilhouettePlayerData = buildAlphaData(LFplayer1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lfw, lfh, 0, 
+			GL_RGBA, GL_UNSIGNED_BYTE, LFsilhouettePlayerData);
+	delete [] LFsilhouettePlayerData;
+	
+	//Right foot PlayerTexture
+	int rfw = player1->width;
+	int rfh = player1->height;
+	glGenTextures(1, &RFplayer1Tex);
+	init_textures(RFplayer1, RFplayer1Tex);
+	glGenTextures(1, &RFsilhouette_player_Texture);
+	glBindTexture(GL_TEXTURE_2D, RFsilhouette_player_Texture);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	unsigned char *RFsilhouettePlayerData = buildAlphaData(RFplayer1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, rfw, rfh, 0, 
+			GL_RGBA, GL_UNSIGNED_BYTE, RFsilhouettePlayerData);
+	delete [] RFsilhouettePlayerData;
 
 	//RED PlayerTexture
         int w2 = player1->width;
