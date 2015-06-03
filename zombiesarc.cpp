@@ -143,14 +143,14 @@ GLuint silhouette_mouse_Texture;
 
 int keys[65536];
 
-//function prototypes
+///function prototypes
 void zomb_zomb_collision(Zombie *a);
 void initXWindows(void);
 void init_opengl(void);
 void cleanupXWindows(void);
 void check_resize(XEvent *e);
 void check_mouse(XEvent *e, Game *game);
-int check_keys(XEvent *e, Game *g);
+int check_keys(XEvent *e);
 void init(Game *g);
 void spawnZombies(Game *g);
 //void init_sounds(void);
@@ -192,7 +192,7 @@ int main(void)
 			XNextEvent(dpy, &e);
 			check_resize(&e);
 			check_mouse(&e, &game);
-			done = check_keys(&e, &game);
+			done = check_keys(&e);
 			if (done)
 				game.running = 0;
 		}
@@ -278,7 +278,7 @@ void screen1(Game *game) //start screen
 			XNextEvent(dpy, &e);
 			check_resize(&e);
 			check_mouse(&e, game);
-			if((donesscreen = check_keys(&e,game))) {//NOT comparing, setting and checking value for 0/1
+			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
 				game->startScreen = 0;
 				game->running = 0;
 			}
@@ -319,7 +319,7 @@ void screen2(Game *game) //game over screen
 			XEvent e;
 			XNextEvent(dpy, &e);
 			check_resize(&e);
-			if((donesscreen = check_keys(&e, game))) {//NOT comparing, setting and checking value for 0/1
+			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
 				game->running = 0;
 				break;
 			}
@@ -344,7 +344,7 @@ void screen3(Game *game) //score screen
 			XEvent e;
 			XNextEvent(dpy, &e);
 			check_resize(&e);
-			if((donesscreen = check_keys(&e, game))) {//NOT comparing, setting and checking value for 0/1
+			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
 				game->running = 0;
 				game->scoreScreen = 0;
 			}
@@ -373,7 +373,7 @@ void screen4(Game *game)
 			XEvent e;
 			XNextEvent(dpy, &e);
 			check_resize(&e);
-			if((donesscreen = check_keys(&e, game))) {//NOT comparing, setting and checking value for 0/1
+			if((donesscreen = check_keys(&e))) {//NOT comparing, setting and checking value for 0/1
 				game->running = 0;
 				game->controlScreen = 0;
 			}
@@ -875,7 +875,7 @@ void check_mouse(XEvent *e, Game *g)
 	}
 }
 
-int check_keys(XEvent *e, Game *g)
+int check_keys(XEvent *e)
 {
 	//keyboard input?
 	static int shift=0;
